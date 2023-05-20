@@ -1,8 +1,5 @@
 import openpyxl
 
-book = openpyxl.open("doc/gis.xlsx", read_only=True, data_only=True)
-sheet = book.active
-
 class InitGis():
     def __init__(self, name, plast, proplast, depth, 
                 thickness,abs_depth,abs_thickness,
@@ -24,7 +21,10 @@ class InitGis():
         self.paker_isolation = paker_isolation
 
 
-def get_gis():    
+def get_gis(path="doc/gis.xlsx"):
+    book = openpyxl.open(path, read_only=True, data_only=True)
+    sheet = book.active
+
     data = []
     for col in range(0,sheet.max_column):
         data.append(InitGis(

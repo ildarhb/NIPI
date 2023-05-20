@@ -48,28 +48,25 @@ def k_h_otn():
     temp2 = 0
     for item in data:
         if item.paker_isolation == "нет":
-            temp1 += (item.abs_thickness * item.permeability)/(abs_thick_rezult_b()*permeability_rezult_b()+abs_thick_rezult_g()*permeability_rezult_g())
+            temp1 += (item.abs_thickness * item.permeability)/(thick_rezult_b()*permeability_rezult_b()+thick_rezult_g()*permeability_rezult_g())
         else:
             temp1 += 0
     for item in data:
         if item.paker_isolation == "нет":
-            temp2 += (item.abs_thickness * item.permeability)/(abs_thick_rezult_b()*permeability_rezult_b()+abs_thick_rezult_g()*permeability_rezult_g())*(1/temp1)
+            temp2 += (item.abs_thickness * item.permeability)/(thick_rezult_b()*permeability_rezult_b()+thick_rezult_g()*permeability_rezult_g())*(1/temp1)
         else:
             temp2 += 0
     return temp2
 
 
-
-result = {
-    "k_h_const" : k_h_otn(),
-    "h_w, м": thick_rezult_b(),
-    "h_g, м": thick_rezult_g(),
-    "m_w, м": porosity_rezult_b(),
-    "m_g, м": porosity_rezult_g(),
-    "k_w, м": permeability_rezult_b(),
-    "k_g, м": permeability_rezult_g(),
-    
-}
-
-for key,value in result.items():
-    print(key, ':', value)
+def get_calc_res():
+    result = {
+        "k_h_const" : k_h_otn(),
+        "h_w, м": thick_rezult_b(),
+        "h_g, м": thick_rezult_g(),
+        "m_w, м": porosity_rezult_b(),
+        "m_g, м": porosity_rezult_g(),
+        "k_w, м": permeability_rezult_b(),
+        "k_g, м": permeability_rezult_g(),
+    }
+    return result
