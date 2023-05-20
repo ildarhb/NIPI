@@ -2,6 +2,7 @@ from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QTableWidgetItem
 from MainWindow import Ui_MainWindow
 import sys
+import initdata
 
 
 class Window(QtWidgets.QMainWindow):
@@ -11,6 +12,7 @@ class Window(QtWidgets.QMainWindow):
         self.ui.setupUi(self)
 
         self.load_data()
+        self.ui.btnGetData.clicked.connect(self.btnGetDataClicked)
 
     def load_data(self):
         self.ui.tableWidget.setRowCount(3)
@@ -21,8 +23,9 @@ class Window(QtWidgets.QMainWindow):
         self.ui.tableWidget.setItem(0, 0, QTableWidgetItem('Test value'))
         self.ui.tableWidget.setItem(0, 1, QTableWidgetItem('5000 tonn'))
 
-    # def get_data(self):
-    #     self.ui.tableWidget.
+    def btnGetDataClicked(self):
+        print("Works!")
+
 
 def create_app():
     app = QtWidgets.QApplication(sys.argv)
@@ -32,7 +35,5 @@ def create_app():
 
 
 if __name__ == "__main__":
-    # create_app()
-    import initdata
-    test = initdata.get_gis()
-    print(test)
+    create_app()
+    data = initdata.get_gis("../doc/gis.xlsx")
