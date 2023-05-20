@@ -24,6 +24,35 @@ def get_gis(path="doc/gis.xlsx"):
     book = openpyxl.open(path, read_only=True, data_only=True)
     sheet = book.active
     data = []
+    data.append(InitGis(
+            #интервал
+            name = "Данные ГИС по скважине",
+            #пласт
+            plast = "Пласт",
+            #пропласток
+            proplast = "Пропласток",
+            #глубина
+            depth = "Глубина по стволу H (md), м",
+            #толщина
+            thickness = "Толщина по стволу L (md), м,",
+            #глубина абсотлют
+            abs_depth = "Глубина абсолютная H (abs), м",
+            #тольщина абсолют
+            abs_thickness = "Толщина абсолютная L (abs), м", 
+            #пористость
+            porosity =  "Пористость, %" ,
+            #проницаемость
+            permeability = "Проницаемость, мД",
+            #литология
+            lithology = "Литология",
+            #коллектор
+            collector = "Коллектор",
+            #начальная насыщенность
+            init_saturation = "Начальная насыщенность",
+            #конченая насыщенность
+            curr_saturation = "Текущая насыщенность",
+            #склективаня изоляция пакером
+            paker_isolation = "Селективная изол-я пакером (искл. из расчета) )"))
     for col in range(0,sheet.max_column):
         data.append(InitGis(
             #интервал
@@ -89,5 +118,5 @@ def get_data(path= "doc/data.xlsx"):
     return data
 
 if __name__=="__main__":
-    for key,value in get_data().items():
-        print(key, ':', value)
+    for item in get_gis():
+        print(item.name)
