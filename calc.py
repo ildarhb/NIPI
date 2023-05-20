@@ -59,17 +59,14 @@ def k_h_otn():
     return temp2
 
 
-
-result = {
-    "k_h_const" : k_h_otn(),
-    "h_w, м": thick_rezult_b(),
-    "h_g, м": thick_rezult_g(),
-    "m_w, м": porosity_rezult_b(),
-    "m_g, м": porosity_rezult_g(),
-    "k_w, м": permeability_rezult_b(),
-    "k_g, м": permeability_rezult_g(),
-    
-}
-
-for key,value in result.items():
-    print(key, ':', value)
+def get_calc_res():
+    result = {
+        "k_h_const" : k_h_otn(),
+        "h_w, м": thick_rezult_b(),
+        "h_g, м": thick_rezult_g(),
+        "m_w, м": porosity_rezult_b(),
+        "m_g, м": porosity_rezult_g(),
+        "k_w, м": permeability_rezult_b(),
+        "k_g, м": permeability_rezult_g(),
+    }
+    return result
