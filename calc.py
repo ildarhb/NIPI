@@ -61,7 +61,7 @@ def k_h_otn():
 
 def get_calc_res():
     result = {
-        "k_h_const" : k_h_otn(),
+        "k_h_отн" : k_h_otn(),
         "h_w, м": thick_rezult_b(),
         "h_g, м": thick_rezult_g(),
         "m_w, м": porosity_rezult_b(),
@@ -70,3 +70,7 @@ def get_calc_res():
         "k_g, м": permeability_rezult_g(),
     }
     return result
+
+if __name__=="__main__":
+    for key,value in get_calc_res().items():
+        print(key, ':', value)
