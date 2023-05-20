@@ -48,12 +48,12 @@ def k_h_otn():
     temp2 = 0
     for item in data:
         if item.paker_isolation == "нет":
-            temp1 += (item.abs_thickness * item.permeability)/(abs_thick_rezult_b()*permeability_rezult_b()+abs_thick_rezult_g()*permeability_rezult_g())
+            temp1 += (item.abs_thickness * item.permeability)/(thick_rezult_b()*permeability_rezult_b()+thick_rezult_g()*permeability_rezult_g())
         else:
             temp1 += 0
     for item in data:
         if item.paker_isolation == "нет":
-            temp2 += (item.abs_thickness * item.permeability)/(abs_thick_rezult_b()*permeability_rezult_b()+abs_thick_rezult_g()*permeability_rezult_g())*(1/temp1)
+            temp2 += (item.abs_thickness * item.permeability)/(thick_rezult_b()*permeability_rezult_b()+thick_rezult_g()*permeability_rezult_g())*(1/temp1)
         else:
             temp2 += 0
     return temp2
