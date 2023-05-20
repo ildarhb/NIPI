@@ -23,6 +23,7 @@ class InitGis():
         self.curr_saturation = curr_saturation
         self.paker_isolation = paker_isolation
 
+
 def get_gis():    
     data = []
     for col in range(0,sheet.max_column):
@@ -58,4 +59,7 @@ def get_gis():
     return data
 
 
+if __name__ == "__main__":
+    gis_dat = get_gis()
+    test = 2
 
