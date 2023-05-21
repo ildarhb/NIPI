@@ -20,9 +20,11 @@ class InitGis():
         self.curr_saturation = curr_saturation
         self.paker_isolation = paker_isolation
 
+
 def get_gis(path="doc/gis.xlsx"):
     book = openpyxl.open(path, read_only=True, data_only=True)
     sheet = book.active
+
     data = []
     data.append(InitGis(
             #интервал
@@ -117,6 +119,13 @@ def get_data(path= "doc/data.xlsx"):
     }
     return data
 
+<<<<<<< HEAD
 if __name__=="__main__":
     for item in get_gis():
         print(item.name)
+=======
+if __name__ == "__main__":
+    gis_dat = get_gis()
+    test = 2
+
+>>>>>>> f05b0ad5307e25143dc4f2dbb483ece8ff1a13e3
