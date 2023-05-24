@@ -1,6 +1,7 @@
-from initdata import get_gis
+from initdata import get_gis, get_data
+from const import * 
 
-data = get_gis()
+data = get_gis()[1:]
 def thick_rezult_b():
     temp = 0
     for item in data:
@@ -70,6 +71,8 @@ def get_calc_res():
         "k_g, м": permeability_rezult_g(),
     }
     return result
+
+
 
 if __name__=="__main__":
     for key,value in get_calc_res().items():

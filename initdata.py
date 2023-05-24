@@ -119,6 +119,12 @@ def get_data(path= "doc/data.xlsx"):
     }
     return data
 
+def compositions():
+    result = {
+        
+    }
+
 if __name__=="__main__":
-    for item in get_gis():
-        print(item.name)
+    for key,value in get_data().items():
+        print(key, ':', value)
+
