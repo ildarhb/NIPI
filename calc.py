@@ -1,5 +1,6 @@
-from initdata import get_gis, get_data
-from const import * 
+from initdata import *
+import math
+
 
 data = get_gis()[1:]
 def thick_rezult_b():
@@ -71,9 +72,21 @@ def get_calc_res():
         "k_g, м": permeability_rezult_g(),
     }
     return result
+D = 0.108
+Q = compositions()["Q, м3/сут"][0]
+for i in range(1,10):
+    
+    r = math.sqrt(30*i*Q/(2*math.pi*thick_rezult_b()*86400))+D
+    w = r/(30*i)
+    y =4*0.052*(w)/math.sqrt(8*permeability_rezult_b()*10**(-15)*porosity_rezult_b()/100)
+    m = compositions()["К, Па*с"][0]*y**(compositions()["n"][0]-1)
+    P = 15908025.0 + m * y + m * Q /86400*math.log(r/D)/(2*math.pi*permeability_rezult_b()*thick_rezult_b()*10**(-15))
+    dP = P - 15401400
+    V = Q/86400*30*i
+    P_N = P if P <= 40000000 else 0 
+    print(P_N)
 
-
-
-if __name__=="__main__":
-    for key,value in get_calc_res().items():
-        print(key, ':', value)
+# if __name__=="__main__":
+#     for key,value in compositions().items():
+#         print(key, ':', value)
+    

@@ -1,12 +1,14 @@
+import initdata
+import calc
+import math
+
+
+
+
 Q_1 = 120
 Q_2 = 72
 Q_3 = 48
 D = 0.108
-
-
-
-
-
 
 P_1 = 390.0
 P_2 = 390.0
