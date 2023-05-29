@@ -74,8 +74,8 @@ def get_calc_res():
     return result
 D = 0.108
 Q = compositions()["Q, м3/сут"][0]
+V_con = 71.08
 for i in range(1,10):
-    
     r = math.sqrt(30*i*Q/(2*math.pi*thick_rezult_b()*86400))+D
     w = r/(30*i)
     y =4*0.052*(w)/math.sqrt(8*permeability_rezult_b()*10**(-15)*porosity_rezult_b()/100)
@@ -83,8 +83,13 @@ for i in range(1,10):
     P = 15908025.0 + m * y + m * Q /86400*math.log(r/D)/(2*math.pi*permeability_rezult_b()*thick_rezult_b()*10**(-15))
     dP = P - 15401400
     V = Q/86400*30*i
-    P_N = P if P <= 40000000 else 0 
-    print(P_N)
+    P_N = P if P <= 40000000 else 0
+    V_N = V if P <= 40000000 else 0
+    r_N = r if P <= 40000000 else 0
+    PN_N = P if V <= V_con else 0
+    VN_N = V_N if V_N <= V_con else 0
+    rN_N = r_N if V_N <= V_con else 0
+    print(rN_N)
 
 # if __name__=="__main__":
 #     for key,value in compositions().items():

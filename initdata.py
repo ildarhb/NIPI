@@ -20,6 +20,107 @@ class InitGis():
         self.curr_saturation = curr_saturation
         self.paker_isolation = paker_isolation
 
+class InitData():
+    def __init__(self, data, plast, ppl, pzab, qj, qg,
+                vgf, dek,dnkt, rc, nvd, udl, dskv, hpref,
+                tolnkt, tolek, dav, zak,vzv, vzg, plg,
+                  plvod,kt, dt, pbuf, pkon,rach,pzabpos):
+        self.data = data
+        self.plast = plast
+        self.ppl = ppl
+        self.pzab = pzab
+        self.qj = qj
+        self.qg = qg
+        self.vgf = vgf
+        self.dek = dek
+        self.dnkt = dnkt
+        self.rc = rc
+        self.nvd = nvd
+        self.udl = udl
+        self.dskv = dskv
+        self.hpref = hpref
+        self.tolnkt = tolnkt
+        self.tolek = tolek
+        self.dav = dav
+        self.zak = zak
+        self.vzv = vzv
+        self.vzg = vzg
+        self.plg = plg
+        self.plvod = plvod
+        self.kt = kt
+        self.dt = dt
+        self.pbuf = pbuf
+        self.pkon = pkon
+        self.rach = rach
+        self.pzabpos = pzabpos
+
+
+def get_initdata(path="doc/initdata.xlsx"):
+    book = openpyxl.open(path, read_only=True, data_only=True)
+    sheet = book.active
+    data = []
+    data.append(InitData(
+        data = "дата_после",
+        plast = "пласт",
+        ppl = "Pпл, атм",
+        pzab = "Pзаб, атм",
+        qj = "Qж, м3/сут",
+        qg = "Qг, тыс. м3/сут",
+        vgf = "ВГФ, м3/тыс. м3",
+        dek = "Dэ/к, мм",
+        dnkt = "Dнкт, мм",
+        rc = "Rс, м",
+        nvd = "Hвд, м",
+        udl = "Удл, м",
+        dskv = "D скв. дол., мм",
+        hpref = "Н перф, м",
+        tolnkt = "Толщина стенок НКТ, мм",
+        tolek = "Толщина стенок Э/К, мм",
+        dav = "Давл. опрессовки, атм",
+        zak = "Закачка с пакером",
+        vzv = "Вяз-ть пл.воды, сПз",
+        vzg = "Вяз-ть газа, сПз",
+        plg = "Плотность газа,  г/см3",
+        plvod = "Пл-ть пл.воды, г/см3",
+        kt = "К-т сверхсжимаемости газа",
+        dt = "ΔT м/у устьем и забоем, ℃",
+        pbuf = "Pбуф, атм",
+        pkon = "P конечное на устье, атм",
+        rach = "Расход жидкости, м3/сут",
+        pzabpos = "Pзаб план-е после РИР, атм"
+    ))
+    for row in range(1,sheet.max_row-5):
+        data.append(InitData(
+        data = sheet[row+2][3].value,
+        plast = sheet[row+2][9].value,
+        ppl = sheet[row+2][20].value,
+        pzab = sheet[row+2][18].value,
+        qj = sheet[row+2][32].value,
+        qg = sheet[row+2][31].value,
+        vgf = sheet[row+2][1].value,
+        dek = sheet[row+2][1].value,
+        dnkt = sheet[row+2][1].value,
+        rc = sheet[row+2][26].value,
+        nvd = sheet[row+2][11].value,
+        udl = sheet[row+2][1].value,
+        dskv = sheet[row+2][1].value,
+        hpref = sheet[row+2][1].value,
+        tolnkt = sheet[row+2][1].value,
+        tolek = sheet[row+2][1].value,
+        dav = sheet[row+2][1].value,
+        zak =sheet[row+2][1].value,
+        vzv = sheet[row+2][1].value,
+        vzg = sheet[row+2][1].value,
+        plg = sheet[row+2][1].value,
+        plvod = sheet[row+2][1].value,
+        kt = sheet[row+2][1].value,
+        dt = sheet[row+2][1].value,
+        pbuf = sheet[row+2][1].value,
+        pkon = sheet[row+2][1].value,
+        rach = sheet[row+2][1].value,
+        pzabpos =sheet[row+2][1].value,
+        ))
+    return data
 
 def get_gis(path="doc/gis.xlsx"):
     book = openpyxl.open(path, read_only=True, data_only=True)
@@ -136,6 +237,6 @@ def compositions():
     return result
 
 if __name__=="__main__":
-    for key,value in get_data().items():
-        print(key, ':', value)
-
+    df = get_initdata()
+    for item in df:
+        print(item.data)
