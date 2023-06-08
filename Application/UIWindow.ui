@@ -24,7 +24,7 @@
     <item>
      <widget class="QTabWidget" name="tabsData">
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tabWatering">
        <attribute name="title">
@@ -63,7 +63,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QColumnView" name="columnViewGelling"/>
+         <widget class="QTableWidget" name="tableWidgetGelling"/>
         </item>
        </layout>
       </widget>
