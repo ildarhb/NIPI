@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox
-import initdata
-import calculation
+from Calculation import initdata
+from Calculation import calculation
 from WindowData import WindowData
 from CacheFile import CacheFile
 
