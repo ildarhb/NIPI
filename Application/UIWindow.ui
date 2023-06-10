@@ -24,7 +24,7 @@
     <item>
      <widget class="QTabWidget" name="tabsData">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tabAfterWatering">
        <attribute name="title">
@@ -33,6 +33,16 @@
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
          <widget class="QTableWidget" name="tableAfterWatering"/>
+        </item>
+       </layout>
+      </widget>
+      <widget class="QWidget" name="tabBeforeWatering">
+       <attribute name="title">
+        <string>Данные до обводнения</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QTableWidget" name="tableBeforeWatering"/>
         </item>
        </layout>
       </widget>
