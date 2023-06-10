@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox, QTableWidget
-import initdata
+from Calculation import initdata, calculation
 from WindowData import WindowData
 from CacheFile import CacheFile
 from UpdatedWidgets import UpgradedQTableWidget
@@ -91,6 +91,7 @@ class Window(QtWidgets.QMainWindow):
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         print("Нажата кнопка Рассчитать")
         self.fill_data()
+        #calculation.calculation_click(self.WindowData)
         pass
         # Фукнция Ильдара
         # return self.WindowData
