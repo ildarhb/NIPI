@@ -1,11 +1,11 @@
 from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox
-from Calculation import initdata
-from Calculation import calculation
+from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox, QTableWidget
+import initdata
 from WindowData import WindowData
 from CacheFile import CacheFile
+from UpdatedWidgets import UpgradedQTableWidget
 
-debug = True
+debug = False
 
 
 class Window(QtWidgets.QMainWindow):
@@ -22,8 +22,9 @@ class Window(QtWidgets.QMainWindow):
         self.combobox_gelling = self.ui.comboGelling  # Выпадающий список с гелеобразующими составами
         self.tableGelling = self.ui.tableWidgetGelling   # Таблица с гелеобразующими составами
         self.tableAfterWatering = self.ui.tableAfterWatering  # Таблица с данными после обводнения
+        self.tableBeforeWatering = self.ui.tableBeforeWatering  # Таблица с данными до обводнения
 
-        # Связывание кнопок с функциями
+        # Связывание кнопок (событий) с функциями (слотами)
         self.ui.btnGetData.clicked.connect(self.btn_getdata_clicked)  # Получить данные
         self.ui.bntCalculate.clicked.connect(self.btn_calculate_clicked)  # Рассчитать
         self.ui.btnAddGelling.clicked.connect(self.btn_addgelling_clicked)  # Добавить гелеобразующий состав
@@ -32,6 +33,7 @@ class Window(QtWidgets.QMainWindow):
         # инициализация моих функций
         self.update_gelling()
         self.init_table_after_watering()
+        self.init_table_before_watering()
 
     # Загружает данные в таблицу из входного Excel
     def load_data(self):
@@ -79,6 +81,9 @@ class Window(QtWidgets.QMainWindow):
             init_gis_row = initdata.InitGis(*tuple(current_row_text))  # делаем из текста класс InitGis
             self.WindowData.gis.append(init_gis_row)  # добавляем класс в список
 
+        self.WindowData.gis_after_watering = self.tableAfterWatering.get_dict_column()
+        self.WindowData.gis_before_watering = self.tableBeforeWatering.get_dict_column()
+
     def btn_getdata_clicked(self):  # Нажатие на кнопку "получить данные"
         self.tableWatering.clear()
         self.load_data()
@@ -86,8 +91,9 @@ class Window(QtWidgets.QMainWindow):
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         print("Нажата кнопка Рассчитать")
         self.fill_data()
-        calculation.calculation_clic(self.WindowData)
+        pass
         # Фукнция Ильдара
+        # return self.WindowData
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
         dialog_gelling = DialogAddGelling(self.cachefile_gelling)
@@ -135,7 +141,10 @@ class Window(QtWidgets.QMainWindow):
 
     def init_table_after_watering(self):
         table = self.tableAfterWatering
-        columns = ('Пласт',
+
+        table.__class__ = UpgradedQTableWidget
+
+        rows = ('Пласт',
                    'Pпл, атм',
                    'Pзаб, атм',
                    'Qж, м3/сут',
@@ -163,9 +172,21 @@ class Window(QtWidgets.QMainWindow):
                    'Расход жидкости, м3/сут',
                    'Pзаб план-е после РИР, атм')
 
-    @staticmethod
-    def init_table_widget():
-        pass
+        table.fill_names(rows, ('Данные',))
+
+    def init_table_before_watering(self):
+        table = self.tableBeforeWatering
+
+        table.__class__ = UpgradedQTableWidget
+
+        rows = ('Пласт',
+                'Pпл, атм',
+                'Pзаб, атм',
+                'Qж, м3/сут',
+                'Qг, тыс. м3/сут',
+                'ВГФ, м3/тыс. м3')
+
+        table.fill_names(rows, ('Данные',))
 
 
 class DialogAddGelling(QDialog):
