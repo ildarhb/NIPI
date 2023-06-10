@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtWidgets import QTableWidgetItem, QDialog
+from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox
 import initdata
 from WindowData import WindowData
 from CacheFile import CacheFile
@@ -31,10 +31,15 @@ class Window(QtWidgets.QMainWindow):
 
     def load_data(self):  # Загружает данные в таблицу из входного Excel
 
+        file_name = QFileDialog.getOpenFileName(self, 'Открыть файл')
+
         try:
-            file_data = initdata.get_gis("../doc/gis.xlsx")
+            file_data = initdata.get_gis(file_name[0])
+            # file_data = initdata.get_gis("../doc/gis.xlsx")
         except BaseException:
-            raise ImportError("Не удалось прочитать файл с данными")
+            Window.show_error(informative_text='Не удалось прочитать файл с данными')
+            return
+            # raise ImportError("Не удалось прочитать файл с данными")
 
         if len(file_data) == 0:  # если нет столбцов, то ничего не заполняем
             return
@@ -96,6 +101,15 @@ class Window(QtWidgets.QMainWindow):
             self.tableGelling.setItem(0, index, QTableWidgetItem(value))
 
         self.WindowData.gelling = gelling_data
+
+    @staticmethod
+    def show_error(text='Error', informative_text='More information', title='Error'):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setText(text)
+        msg.setInformativeText(informative_text)
+        msg.setWindowTitle(title)
+        msg.exec_()
 
 
 class DialogAddGelling(QDialog):
