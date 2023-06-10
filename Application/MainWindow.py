@@ -4,6 +4,8 @@ import initdata
 from WindowData import WindowData
 from CacheFile import CacheFile
 
+debug = True
+
 
 class Window(QtWidgets.QMainWindow):
     def __init__(self):
@@ -18,7 +20,7 @@ class Window(QtWidgets.QMainWindow):
         self.cachefile_gelling = CacheFile("Gelling")  # Файл с данными гелеобразующих составов
         self.combobox_gelling = self.ui.comboGelling  # Выпадающий список с гелеобразующими составами
         self.tableGelling = self.ui.tableWidgetGelling   # Таблица с гелеобразующими составами
-
+        self.tableAfterWatering = self.ui.tableAfterWatering  # Таблица с данными после обводнения
 
         # Связывание кнопок с функциями
         self.ui.btnGetData.clicked.connect(self.btn_getdata_clicked)  # Получить данные
@@ -28,14 +30,19 @@ class Window(QtWidgets.QMainWindow):
 
         # инициализация моих функций
         self.update_gelling()
+        self.init_table_after_watering()
 
-    def load_data(self):  # Загружает данные в таблицу из входного Excel
+    # Загружает данные в таблицу из входного Excel
+    def load_data(self):
 
-        file_name = QFileDialog.getOpenFileName(self, 'Открыть файл')
+        if not debug:
+            file_name = QFileDialog.getOpenFileName(self, 'Открыть файл')
 
         try:
-            file_data = initdata.get_gis(file_name[0])
-            # file_data = initdata.get_gis("../doc/gis.xlsx")
+            if debug:
+                file_data = initdata.get_gis("../doc/gis.xlsx")
+            else:
+                file_data = initdata.get_gis(file_name[0])
         except BaseException:
             Window.show_error(informative_text='Не удалось прочитать файл с данными')
             return
@@ -47,7 +54,9 @@ class Window(QtWidgets.QMainWindow):
         self.tableWatering.setColumnCount(len(file_data))  # устанавливаем количество столбцов
         columns = file_data[0].__dict__  # получаем все переменные класса
         self.tableWatering.setRowCount(len(columns))  # устанавливаем количество строк
-        self.tableWatering.setVerticalHeaderLabels(columns.keys())  # даем названия строкам
+        self.tableWatering.setVerticalHeaderLabels(columns.values())  # даем названия строкам
+
+        file_data.pop(0)  # удаляем первый столбец с именами
 
         # Заполняем данными таблицу
         for column_index, column in enumerate(file_data):
@@ -56,7 +65,18 @@ class Window(QtWidgets.QMainWindow):
         return file_data
 
     def fill_data(self):  # Заполнение класса WindowData
-        self.WindowData.gis = self.load_data()
+        self.WindowData.gis.clear()
+
+        table = self.tableWatering
+        row_count = table.rowCount()
+        column_count = table.columnCount()
+
+        # Заполняем обводнение
+        for column_index in range(0, column_count):
+            current_row = (table.item(row_index, column_index) for row_index in range(row_count))  # столбец таблицы
+            current_row_text = (item.text() if item is not None else "" for item in current_row)  # текстовый столбец
+            init_gis_row = initdata.InitGis(*tuple(current_row_text))  # делаем из текста класс InitGis
+            self.WindowData.gis.append(init_gis_row)  # добавляем класс в список
 
     def btn_getdata_clicked(self):  # Нажатие на кнопку "получить данные"
         self.tableWatering.clear()
@@ -65,7 +85,7 @@ class Window(QtWidgets.QMainWindow):
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         print("Нажата кнопка Рассчитать")
         self.fill_data()
-        # Фукнция ильдара
+        # Фукнция Ильдара
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
         dialog_gelling = DialogAddGelling(self.cachefile_gelling)
@@ -110,6 +130,40 @@ class Window(QtWidgets.QMainWindow):
         msg.setInformativeText(informative_text)
         msg.setWindowTitle(title)
         msg.exec_()
+
+    def init_table_after_watering(self):
+        table = self.tableAfterWatering
+        columns = ('Пласт',
+                   'Pпл, атм',
+                   'Pзаб, атм',
+                   'Qж, м3/сут',
+                   'Qг, тыс. м3/сут',
+                   'ВГФ, м3/тыс. м3',
+                   'Dэ/к, мм',
+                   'Dнкт, мм',
+                   'Rс, м',
+                   'Hвд, м',
+                   'Удл, м',
+                   'D скв. дол., мм',
+                   'Н перф, м',
+                   'Толщина стенок НКТ, мм',
+                   'Толщина стенок Э/К, мм',
+                   'Давл. опрессовки, атм',
+                   'Закачка с пакером',
+                   'Вяз-ть пл.воды, сПз',
+                   'Вяз-ть газа, сПз',
+                   'Плотность газа,  г/см3',
+                   'Пл-ть пл.воды, г/см3',
+                   'К-т сверхсжимаемости газа',
+                   'ΔT м/у устьем и забоем, ℃',
+                   'Pбуф, атм',
+                   'P конечное на устье, атм;',
+                   'Расход жидкости, м3/сут',
+                   'Pзаб план-е после РИР, атм')
+
+    @staticmethod
+    def init_table_widget():
+        pass
 
 
 class DialogAddGelling(QDialog):

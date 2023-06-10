@@ -5,7 +5,7 @@ class CacheFile:
     def __init__(self, name: str):
         self.path = 'Cache/' + name + '.pkl'
 
-    def write(self, new_object = None):
+    def write(self, new_object=None):
         try:
             with open(self.path, 'wb') as file:
                 dump(new_object, file)
