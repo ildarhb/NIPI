@@ -86,7 +86,7 @@ class Window(QtWidgets.QMainWindow):
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         print("Нажата кнопка Рассчитать")
         self.fill_data()
-        calculation.calculation_clic()
+        calculation.calculation_clic(self.WindowData)
         # Фукнция Ильдара
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
