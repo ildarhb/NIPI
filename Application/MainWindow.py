@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtWidgets import QTableWidgetItem, QDialog
+from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox
 import initdata
 from WindowData import WindowData
 from CacheFile import CacheFile
@@ -14,24 +14,32 @@ class Window(QtWidgets.QMainWindow):
         # Назначение переменных
         self.WindowData = WindowData()  # Класс со всеми входными данными
         self.tableWatering = self.ui.tableWatering  # Таблица с обводнениями
+        self.cache_gelling = None  # гелеобразующие составы
         self.cachefile_gelling = CacheFile("Gelling")  # Файл с данными гелеобразующих составов
-        self.combobox_gelling = self.ui.comboGelling
+        self.combobox_gelling = self.ui.comboGelling  # Выпадающий список с гелеобразующими составами
+        self.tableGelling = self.ui.tableWidgetGelling   # Таблица с гелеобразующими составами
+
 
         # Связывание кнопок с функциями
         self.ui.btnGetData.clicked.connect(self.btn_getdata_clicked)  # Получить данные
         self.ui.bntCalculate.clicked.connect(self.btn_calculate_clicked)  # Рассчитать
         self.ui.btnAddGelling.clicked.connect(self.btn_addgelling_clicked)  # Добавить гелеобразующий состав
-        self.combobox_gelling.currentTextChanged.connect(self.combobox_gelling_changed)  # Выбор гелеобразующего состава
+        self.combobox_gelling.currentIndexChanged.connect(self.combobox_gelling_changed)  # Выбор гелеобразующего состава
 
         # инициализация моих функций
         self.update_gelling()
 
     def load_data(self):  # Загружает данные в таблицу из входного Excel
 
+        file_name = QFileDialog.getOpenFileName(self, 'Открыть файл')
+
         try:
-            file_data = initdata.get_gis("../doc/gis.xlsx")
+            file_data = initdata.get_gis(file_name[0])
+            # file_data = initdata.get_gis("../doc/gis.xlsx")
         except BaseException:
-            raise ImportError("Не удалось прочитать файл с данными")
+            Window.show_error(informative_text='Не удалось прочитать файл с данными')
+            return
+            # raise ImportError("Не удалось прочитать файл с данными")
 
         if len(file_data) == 0:  # если нет столбцов, то ничего не заполняем
             return
@@ -66,14 +74,43 @@ class Window(QtWidgets.QMainWindow):
 
     def update_gelling(self):
         self.combobox_gelling.clear()
-        cache_gelling = self.cachefile_gelling.read().data
-        if len(cache_gelling) == 0:
+
+        self.cache_gelling = self.cachefile_gelling.read()
+        if self.cache_gelling is not None:
+            self.cache_gelling = self.cache_gelling.data
+        else:
             return
-        for gelling in cache_gelling:
+
+        if len(self.cache_gelling) == 0:
+            return
+        for gelling in self.cache_gelling:
             self.combobox_gelling.addItem(gelling)
 
     def combobox_gelling_changed(self):
-        print("WORKS")
+        gelling_key = self.combobox_gelling.currentText()
+        if gelling_key == '':
+            return
+        gelling_data = self.cache_gelling[gelling_key]
+
+        # Инициализация таблицы
+        self.tableGelling.setRowCount(1)
+        self.tableGelling.setColumnCount(len(gelling_data))
+        self.tableGelling.setHorizontalHeaderLabels(gelling_data.keys())
+
+        for index, value in enumerate(gelling_data.values()):  # Заполнение таблицы
+            self.tableGelling.setItem(0, index, QTableWidgetItem(value))
+
+        self.WindowData.gelling = gelling_data
+
+    @staticmethod
+    def show_error(text='Error', informative_text='More information', title='Error'):
+        msg = QMessageBox()
+        msg.setIcon(QMessageBox.Critical)
+        msg.setText(text)
+        msg.setInformativeText(informative_text)
+        msg.setWindowTitle(title)
+        msg.exec_()
+
 
 class DialogAddGelling(QDialog):
     def __init__(self, cache_file):
@@ -132,3 +169,4 @@ class GellingContainer:
 
     def __len__(self):
         return len(self.data)
+
