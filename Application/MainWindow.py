@@ -1,6 +1,7 @@
 from PyQt5 import QtWidgets, uic, QtCore
 from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox
 import initdata
+import calculation
 from WindowData import WindowData
 from CacheFile import CacheFile
 
@@ -85,6 +86,7 @@ class Window(QtWidgets.QMainWindow):
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         print("Нажата кнопка Рассчитать")
         self.fill_data()
+        calculation.calculation_clic()
         # Фукнция Ильдара
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
