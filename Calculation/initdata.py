@@ -122,7 +122,13 @@ def get_initdata(path="doc/initdata.xlsx"):
         ))
     return data
 
-def get_gis(path="doc/gis.xlsx"):
+
+def normlize(data):
+    return round(float(data),2)
+
+
+
+def get_gis(path="doc/origin_gis.xlsx"):
     book = openpyxl.open(path, read_only=True, data_only=True)
     sheet = book.active
 
@@ -156,36 +162,37 @@ def get_gis(path="doc/gis.xlsx"):
             curr_saturation = "Текущая насыщенность",
             #склективаня изоляция пакером
             paker_isolation = "Селективная изол-я пакером (искл. из расчета) )"))
-    for col in range(0,sheet.max_column):
+    for row in range(2,sheet.max_row):
         data.append(InitGis(
             #интервал
-            name = sheet[1][col].value,
+            name =  f'{row}-й инт.',
             #пласт
-            plast = sheet[2][col].value,
+            plast = sheet[row][2].value,
             #пропласток
-            proplast = sheet[3][col].value,
+            proplast =  sheet[row][3].value,
             #глубина
-            depth = sheet[4][col].value,
+            depth =  round(sheet[row][4].value),
             #толщина
-            thickness = sheet[5][col].value,
+            thickness =  round(sheet[row][5].value),
             #глубина абсотлют
-            abs_depth = sheet[6][col].value,
+            abs_depth =  round(sheet[row][7].value,2),
             #тольщина абсолют
-            abs_thickness = sheet[7][col].value,
+            abs_thickness =  round(sheet[row][8].value,2),
             #пористость
-            porosity = sheet[8][col].value if sheet[8][col].value != None else 0, 
+            porosity =  round(sheet[row][20].value, 2) if sheet[row][20].value != None else 0,
             #проницаемость
-            permeability = sheet[9][col].value if sheet[9][col].value != None else 0,
+            permeability =  round(sheet[row][21].value, 2) if sheet[row][21].value != None else 0,
             #литология
-            lithology = sheet[10][col].value if sheet[10][col].value != None else 0,
+            lithology = sheet[row][11].value,
             #коллектор
-            collector = sheet[11][col].value,
+            collector = sheet[row][12].value,
             #начальная насыщенность
-            init_saturation = sheet[12][col].value,
+            init_saturation = 'Г' if sheet[row][14].value=='Н' else (sheet[row][14].value if sheet[row][14].value!= None else ''),
             #конченая насыщенность
-            curr_saturation = sheet[13][col].value,
+            curr_saturation = 'Г' if sheet[row][15].value=='Н' else (sheet[row][15].value if sheet[row][15].value!= None else ''),
             #склективаня изоляция пакером
-            paker_isolation = sheet[14][col].value))
+            paker_isolation = 'нет',
+            ))
     return data
 
 def get_data(path= "doc/data.xlsx"):
@@ -237,6 +244,7 @@ def compositions():
     return result
 
 if __name__=="__main__":
-    df = get_initdata()
+    df = get_gis()
     for item in df:
-        print(item.data)
+        print(item.name, item.plast, item.proplast, item.depth, 
+                item.thickness,item.abs_depth,item.abs_thickness)

@@ -91,7 +91,7 @@ class Window(QtWidgets.QMainWindow):
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         print("Нажата кнопка Рассчитать")
         self.fill_data()
-        #calculation.calculation_click(self.WindowData)
+        calculation.calculation_click(self.WindowData)
         pass
         # Фукнция Ильдара
         # return self.WindowData
