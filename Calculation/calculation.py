@@ -67,7 +67,7 @@ def calculation_click(data):
         radius_data.append([r1, r2, r3])
 
 
-    image = io.ByteIO
+    image = io.BytesIO()
     df = pd.DataFrame(radius_data)
     df = df.rename(columns = {0:'Экран из 1 полимера, м', 1:'Экран из 2 полимера, м', 2:'Экран из 3 полимера, м'})
     ax = df.plot.barh(stacked=True, figsize=(10, 12))
