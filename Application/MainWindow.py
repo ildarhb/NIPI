@@ -95,7 +95,8 @@ class Window(QMainWindow):
 
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         self.fill_data()
-        radius, stability, radius_plot, injection_plot = calculation.calculation_click(self.WindowData)  # функция Ильдара для проведения всех вычислений
+        res_list = calculation.calculation_click(self.WindowData)
+        radius, stability, radius_plot, injection_plot = tuple(res_list)
         result_window = DialogResult(radius, stability, radius_plot, injection_plot)
         result_window.show()
 
@@ -297,11 +298,10 @@ class DialogResult(QMainWindow):
         self.fill_stability_table()
 
     def show_radius(self):
-        self.radius_plot.figure.show()
+        self.radius_plot.show()
 
     def show_injection(self):
-        pass
-        # self.injection_plot.figure.show()
+        self.injection_plot.show()
 
     def fill_radius_table(self):
         table = self.table_radius
@@ -310,8 +310,15 @@ class DialogResult(QMainWindow):
         if len(self.radius) == 0:
             return
 
-        row_names = list(map(str, range(len(self.radius))))
-        column_names = list(map(str, range(len(self.radius[0]))))
+        column_names = self.radius[0]
+        column_names.pop(0)
+        row_names = list(map(lambda x: x[0], self.radius))
+        row_names.pop(0)
+
+        self.radius.pop(0)
+        for row in self.radius:
+            row.pop(0)
+
         table.fill_names(row_names, column_names)
         table.fill_data(self.radius)
 
@@ -319,10 +326,19 @@ class DialogResult(QMainWindow):
         table = self.table_stability
         table.__class__ = UpgradedQTableWidget
 
-        if len(self.stability) < 2:
+        if len(self.stability) == 0:
             return
 
-        row_names = list(map(str, range(len(self.stability))))
-        column_names = list(map(str, range(len(self.stability[1]))))
+        # row_names = list(map(str, range(len(self.stability))))
+        # column_names = list(map(str, range(len(self.stability[1]))))
+        column_names = self.stability[0]
+        column_names.pop(0)
+        row_names = list(map(lambda x: x[0], self.stability))
+        row_names.pop(0)
+
+        self.stability.pop(0)
+        for row in self.stability:
+            row.pop(0)
+
         table.fill_names(row_names, column_names)
         table.fill_data(self.stability)
