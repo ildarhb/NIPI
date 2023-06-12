@@ -19,7 +19,9 @@ class Window(QtWidgets.QMainWindow):
         self.tableWatering = self.ui.tableWatering  # Таблица с обводнениями
         self.cache_gelling = None  # гелеобразующие составы
         self.cachefile_gelling = CacheFile("Gelling")  # Файл с данными гелеобразующих составов
-        self.combobox_gelling = self.ui.comboGelling  # Выпадающий список с гелеобразующими составами
+        self.combobox_gelling1 = self.ui.comboGelling1  # Выпадающий список с гелеобразующими составами
+        self.combobox_gelling2 = self.ui.comboGelling2
+        self.combobox_gelling3 = self.ui.comboGelling3
         self.tableGelling = self.ui.tableWidgetGelling   # Таблица с гелеобразующими составами
         self.tableAfterWatering = self.ui.tableAfterWatering  # Таблица с данными после обводнения
         self.tableBeforeWatering = self.ui.tableBeforeWatering  # Таблица с данными до обводнения
@@ -28,12 +30,15 @@ class Window(QtWidgets.QMainWindow):
         self.ui.btnGetData.clicked.connect(self.btn_getdata_clicked)  # Получить данные
         self.ui.bntCalculate.clicked.connect(self.btn_calculate_clicked)  # Рассчитать
         self.ui.btnAddGelling.clicked.connect(self.btn_addgelling_clicked)  # Добавить гелеобразующий состав
-        self.combobox_gelling.currentIndexChanged.connect(self.combobox_gelling_changed)  # Выбор гелеобразующего состава
+        self.combobox_gelling1.currentIndexChanged.connect(self.combobox_gelling_changed1)  # Выбор гелеобразующего состава
+        self.combobox_gelling2.currentIndexChanged.connect(self.combobox_gelling_changed2)
+        self.combobox_gelling3.currentIndexChanged.connect(self.combobox_gelling_changed3)
 
         # инициализация моих функций
         self.update_gelling()
         self.init_table_after_watering()
         self.init_table_before_watering()
+        self.init_table_gelling()
 
     # Загружает данные в таблицу из входного Excel
     def load_data(self):
@@ -102,7 +107,9 @@ class Window(QtWidgets.QMainWindow):
         self.update_gelling()
 
     def update_gelling(self):
-        self.combobox_gelling.clear()
+        self.combobox_gelling1.clear()
+        self.combobox_gelling2.clear()
+        self.combobox_gelling3.clear()
 
         self.cache_gelling = self.cachefile_gelling.read()
         if self.cache_gelling is not None:
@@ -113,23 +120,37 @@ class Window(QtWidgets.QMainWindow):
         if len(self.cache_gelling) == 0:
             return
         for gelling in self.cache_gelling:
-            self.combobox_gelling.addItem(gelling)
+            self.combobox_gelling1.addItem(gelling)
+            self.combobox_gelling2.addItem(gelling)
+            self.combobox_gelling3.addItem(gelling)
 
-    def combobox_gelling_changed(self):
-        gelling_key = self.combobox_gelling.currentText()
-        if gelling_key == '':
+    def combobox_gelling_changed1(self):
+        gelling_key = self.combobox_gelling1.currentText()
+
+        self.fill_table_gelling(1, gelling_key)
+
+    def combobox_gelling_changed2(self):
+        gelling_key = self.combobox_gelling2.currentText()
+
+        self.fill_table_gelling(2, gelling_key)
+
+    def combobox_gelling_changed3(self):
+        gelling_key = self.combobox_gelling3.currentText()
+
+        self.fill_table_gelling(3, gelling_key)
+
+    def fill_table_gelling(self, num: int, key: str):
+        if key == '':
             return
-        gelling_data = self.cache_gelling[gelling_key]
 
-        # Инициализация таблицы
-        self.tableGelling.setRowCount(1)
-        self.tableGelling.setColumnCount(len(gelling_data))
-        self.tableGelling.setHorizontalHeaderLabels(gelling_data.keys())
+        num -= 1  # индекс стоки на 1 меньше номера колонки
+
+        gelling_data = self.cache_gelling[key]
 
         for index, value in enumerate(gelling_data.values()):  # Заполнение таблицы
-            self.tableGelling.setItem(0, index, QTableWidgetItem(value))
+            self.tableGelling.setItem(num, index, QTableWidgetItem(value))
 
-        self.WindowData.gelling = gelling_data
+        self.WindowData.gelling[num] = gelling_data  # Заполняем выходной класс
 
     @staticmethod
     def show_error(text='Error', informative_text='More information', title='Error'):
@@ -188,6 +209,14 @@ class Window(QtWidgets.QMainWindow):
                 'ВГФ, м3/тыс. м3')
 
         table.fill_names(rows, ('Данные',))
+
+    def init_table_gelling(self):
+        table = self.tableGelling
+
+        table.__class__ = UpgradedQTableWidget
+
+        columns = DialogAddGelling(self.cache_gelling).columns
+        table.fill_names(('1', '2', '3'), columns)
 
 
 class DialogAddGelling(QDialog):

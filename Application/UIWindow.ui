@@ -24,11 +24,11 @@
     <item>
      <widget class="QTabWidget" name="tabsData">
       <property name="currentIndex">
-       <number>1</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="tabAfterWatering">
        <attribute name="title">
-        <string>Данные после обводнения</string>
+        <string>После обводнения</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
@@ -38,7 +38,7 @@
       </widget>
       <widget class="QWidget" name="tabBeforeWatering">
        <attribute name="title">
-        <string>Данные до обводнения</string>
+        <string>До обводнения</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
@@ -48,7 +48,7 @@
       </widget>
       <widget class="QWidget" name="tabWatering">
        <attribute name="title">
-        <string>Обводнение</string>
+        <string>ГИС по скважине</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -71,7 +71,17 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <widget class="QComboBox" name="comboGelling"/>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QComboBox" name="comboGelling1"/>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboGelling2"/>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboGelling3"/>
+            </item>
+           </layout>
           </item>
           <item>
            <widget class="QPushButton" name="btnAddGelling">
