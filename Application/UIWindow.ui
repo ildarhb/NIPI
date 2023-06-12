@@ -24,7 +24,7 @@
     <item>
      <widget class="QTabWidget" name="tabsData">
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="tabAfterWatering">
        <attribute name="title">
@@ -71,7 +71,17 @@
         <item>
          <layout class="QHBoxLayout" name="horizontalLayout">
           <item>
-           <widget class="QComboBox" name="comboGelling"/>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="QComboBox" name="comboGelling1"/>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboGelling2"/>
+            </item>
+            <item>
+             <widget class="QComboBox" name="comboGelling3"/>
+            </item>
+           </layout>
           </item>
           <item>
            <widget class="QPushButton" name="btnAddGelling">
