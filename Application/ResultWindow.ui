@@ -18,17 +18,24 @@
     <item>
      <widget class="QTabWidget" name="tabs_result">
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="tab_image">
        <attribute name="title">
-        <string>График</string>
+        <string>Графики</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLabel" name="label_image">
+         <widget class="QPushButton" name="btn_show_radius">
           <property name="text">
-           <string>TextLabel</string>
+           <string>показать график радиуса</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btn_show_injection">
+          <property name="text">
+           <string>показать график закачки</string>
           </property>
          </widget>
         </item>
@@ -38,11 +45,21 @@
        <attribute name="title">
         <string>Радиус</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <widget class="QTableWidget" name="table_radius"/>
+        </item>
+       </layout>
       </widget>
       <widget class="QWidget" name="tab_stability">
        <attribute name="title">
         <string>Устойчивость</string>
        </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
+        <item>
+         <widget class="QTableWidget" name="table_stability"/>
+        </item>
+       </layout>
       </widget>
      </widget>
     </item>

@@ -282,17 +282,47 @@ class DialogResult(QMainWindow):
         self.ui = uic.loadUi('ResultWindow.ui', self)
         self.setWindowTitle("Вывод результатов вычислений")
 
-        self.label_image = self.ui.label_image
-
         self.radius = radius
         self.stability = stability
         self.radius_plot = radius_plot
         self.injection_plot = injection_plot
 
-        self.radius_plot.figure.show()
-        self.injection_plot.show()
-        print('went')
+        self.table_radius = self.ui.table_radius
+        self.table_stability = self.ui.table_stability
 
-    def show_image(self):
-        pixmap = QtGui.QPixmap(self.plot)
-        self.label_image.setPixmap(pixmap.scaled(self.label_image.size()))
+        self.ui.btn_show_radius.clicked.connect(self.show_radius)
+        self.ui.btn_show_injection.clicked.connect(self.show_injection)
+
+        self.fill_radius_table()
+        self.fill_stability_table()
+
+    def show_radius(self):
+        self.radius_plot.figure.show()
+
+    def show_injection(self):
+        pass
+        # self.injection_plot.figure.show()
+
+    def fill_radius_table(self):
+        table = self.table_radius
+        table.__class__ = UpgradedQTableWidget
+
+        if len(self.radius) == 0:
+            return
+
+        row_names = list(map(str, range(len(self.radius))))
+        column_names = list(map(str, range(len(self.radius[0]))))
+        table.fill_names(row_names, column_names)
+        table.fill_data(self.radius)
+
+    def fill_stability_table(self):
+        table = self.table_stability
+        table.__class__ = UpgradedQTableWidget
+
+        if len(self.stability) < 2:
+            return
+
+        row_names = list(map(str, range(len(self.stability))))
+        column_names = list(map(str, range(len(self.stability[1]))))
+        table.fill_names(row_names, column_names)
+        table.fill_data(self.stability)

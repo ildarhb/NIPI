@@ -1,4 +1,4 @@
-from PyQt5.QtWidgets import QTableWidget
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
 
 
 class UpgradedQTableWidget(QTableWidget):
@@ -29,3 +29,8 @@ class UpgradedQTableWidget(QTableWidget):
         items = self.get_table_items()[index]
         names = self.VerticalHeaderLabels
         return {key: value for key, value in zip(names, items)}
+
+    def fill_data(self, data: list):
+        for ind_row, row in enumerate(data):
+            for ind_item, item in enumerate(row):
+                self.setItem(ind_row, ind_item, QTableWidgetItem(str(item)))
