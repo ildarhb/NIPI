@@ -171,8 +171,10 @@ def get_temp(data, a, b, c):
 
 def ustoy(gis, radius_data):
     res = []
-    res.append([get_temp(radius_data[0], G_kr_w1, G_kr_w2, G_kr_w3)])
-    res.append(get_temp(radius_data[1], G_kr_g1, G_kr_g2, G_kr_g3))
+    temp1, temp2, temp3, temp4 = get_temp(radius_data[0], G_kr_w1, G_kr_w2, G_kr_w3)
+    res.append([temp1, temp2, temp3, temp4])
+    temp1, temp2, temp3, temp4 = get_temp(radius_data[1], G_kr_g1, G_kr_g2, G_kr_g3)
+    res.append([temp1, temp2, temp3, temp4])
 
     for i in range(len(gis)):       
         if gis[i].curr_saturation == 'В':
@@ -227,21 +229,34 @@ def calculation_click(data):
     df = pd.concat([df, row.to_frame().T])
     df = pd.concat([df, row_g.to_frame().T])
     df = pd.concat([df, row_w.to_frame().T])
-    ax = df.plot(kind='barh', stacked=True, width=1, figsize=(10, 12))
-    ax.set_xticks(range(len(df.columns)))
-    ax.set_xticklabels([], rotation=90)
-    for p in ax.patches:
+    ax1 = df.plot(kind='barh', stacked=True, width=1, figsize=(10, 12))
+    ax1.set_xticks(range(len(df.columns)))
+    ax1.set_xticklabels([], rotation=90)
+    for p in ax1.patches:
         left, bottom, width, height = p.get_bbox().bounds
         temp = str(width.round(2)) if width != 0 else ''
-        ax.annotate(temp, xy=(left+width/2, bottom+height/2), 
+        ax1.annotate(temp, xy=(left+width/2, bottom+height/2), 
                     ha='center', va='center')
-    ax.figure.savefig(image1)
+    ax1.figure.savefig('image4.png')
 
     
     radius_data.insert(0, [r1_g, r2_g, r3_g])
     radius_data.insert(0, [r1_w, r2_w, r3_w])
-
     ustoy_data = ustoy(data.gis, radius_data)
+    ustoy_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м', 'Экран'])
+    ustoy_data[0].insert(0, 'Устойчивость экранов')
+    ustoy_data[1].insert(0, 'Рез-т. В')
+    ustoy_data[2].insert(0, 'Рез-т. Г')
+    for i in range(len(ustoy_data)-3):
+        ustoy_data[i+3].insert(0, f'{i+1}-й инт.')
+
+    radius_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м'])
+    radius_data[0].insert(0, 'Радиусы эранов')
+    radius_data[1].insert(0, 'Рез-т. В')
+    radius_data[2].insert(0, 'Рез-т. Г')
+    for i in range(len(radius_data)-3):
+        radius_data[i+3].insert(0, f'{i+1}-й инт.')
+
 
 
     P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
@@ -249,9 +264,14 @@ def calculation_click(data):
     plt.plot(t_data,P_data)
     plt.plot(t_data,P_data, 'b', label='P, атм')
     plt.plot(t_data,Pust_data, 'g', label='Pуст, атм')
+    plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
     parallel_line_y = 390
     plt.axhline(y=parallel_line_y, color='r', linestyle='--', label='Pкрт, атм')
     plt.xlabel('Время закачки, мин')
     plt.ylabel('Давление, атм / Объем, м3')
+    ax2 = plt.gca()
+    ax2.figure.savefig('image4.png')
 
-    return radius_data, ustoy_data, ax, plt
+    print(ustoy_data)
+
+    return [radius_data, ustoy_data, ax1, ax2]
