@@ -119,7 +119,3 @@ def calculation_click(data):
     ax.figure.savefig(image)
 
     return radius_data, image
-
-
-    
-    print(df)
