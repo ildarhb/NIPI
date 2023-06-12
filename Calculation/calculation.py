@@ -1,13 +1,62 @@
 import math
-from Application.WindowData import WindowData
 from Calculation.add_init import *
-from Application.CacheFile import CacheFile
 import pandas as pd
-import matplotlib.pyplot as plt
-import numpy as np
 import io
+import matplotlib.pyplot as plt
+
+def calc_p(t, h_w, m_w, k_w, gell):
+    r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
+    w = r/t
+    y = 4*alpha*w/(math.sqrt(8*float(k_w)*10**(-15)*float(m_w)/100))
+    m = float(gell.get("К, Па*с"))*y**(float(gell.get("n"))-1)
+    P = Ppl+m*y+m*float(gell.get("Q, м3/сут"))/86400*math.log(r/D)/(2*math.pi*float(k_w)*10**(-15)*float(h_w))
+    return P/101325, m
+
+def get_graph_data(h_w, m_w, k_w, gell, t1_w, t2_w, t3_w):
+    P_data = []
+    Pust_data = []
+    m_data = []
+    t_data = []
+    for i in range(10000):
+        t = (i+1)*30
+        t_data.append(t/60)
+
+        P1, m1 = calc_p(t, h_w, m_w, k_w, gell[0])
+        P2 = 0
+        m2 = 0
+        P3 = 0
+        m3 = 0
+
+        if t > t1_w:
+            P2, m2 = calc_p(t-t1_w, h_w, m_w, k_w, gell[1])
+
+        if t > (t1_w+t2_w):
+            P3, m3 = calc_p(t-t2_w-t1_w, h_w, m_w, k_w, gell[2])
+
+        if P2 == 0:
+            P_res = P1
+            m_res = m1
+        elif P3 == 0:
+            P_res = (P1+P2)/2
+            m_res = (m1+m2)/2
+        else:
+            P_res = (P1+P2+P3)/3
+            m_res = (m1+m2+m3)/2
+
+        if t > (t1_w+t2_w+t3_w):
+            P_res = 0
+            m_res = 0 
+        P_ust = (P_res - 1000*9.81*1757/101325 ) if P_res - 1000*9.81*1757/101325 > 0 else 0
+        Pust_data.append(P_ust)
+        P_data.append(P_res)
+        m_data.append(m_res)
+
+    return P_data, Pust_data, m_data, t_data
+        
+
 
 def step1fin(h_w, m_w, k_w, gell, Vol):
+    P_data = []
     for i in range(10000):
         t = (i+1)*30
         r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
@@ -139,7 +188,7 @@ def ustoy(gis, radius_data):
     return res
 
 
-
+    
 def calculation_click(data):
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
     Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
@@ -151,9 +200,9 @@ def calculation_click(data):
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
 
-    t1_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
     t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
     r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
 
     t1_g = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
@@ -164,7 +213,7 @@ def calculation_click(data):
     
 
 
-    image = io.BytesIO()
+    image1 = io.BytesIO()
     df = pd.DataFrame(radius_data)
     df = df.rename(columns = {0:'Экран из 1 полимера, м', 1:'Экран из 2 полимера, м', 2:'Экран из 3 полимера, м'})
     #df['Скважина'] = 0.108
@@ -186,7 +235,7 @@ def calculation_click(data):
         temp = str(width.round(2)) if width != 0 else ''
         ax.annotate(temp, xy=(left+width/2, bottom+height/2), 
                     ha='center', va='center')
-    ax.figure.savefig(image)
+    ax.figure.savefig(image1)
 
     
     radius_data.insert(0, [r1_g, r2_g, r3_g])
@@ -194,4 +243,15 @@ def calculation_click(data):
 
     ustoy_data = ustoy(data.gis, radius_data)
 
-    return radius_data, ustoy_data, image
+
+    P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
+    plt.figure(figsize=(20, 12))
+    plt.plot(t_data,P_data)
+    plt.plot(t_data,P_data, 'b', label='P, атм')
+    plt.plot(t_data,Pust_data, 'g', label='Pуст, атм')
+    parallel_line_y = 390
+    plt.axhline(y=parallel_line_y, color='r', linestyle='--', label='Pкрт, атм')
+    plt.xlabel('Время закачки, мин')
+    plt.ylabel('Давление, атм / Объем, м3')
+
+    return radius_data, ustoy_data, ax, plt
