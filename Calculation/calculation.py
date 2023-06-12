@@ -116,7 +116,9 @@ def calculation_click(data):
         temp = str(width.round(2)) if width != 0 else ''
         ax.annotate(temp, xy=(left+width/2, bottom+height/2), 
                     ha='center', va='center')
-    ax.figure.savefig("image.png")
+    ax.figure.savefig(image)
+
+    return radius_data, image
 
 
     
