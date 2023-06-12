@@ -7,15 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import io
 
-class Radius():
-    def __init__(self, r1, r2, r3):
-        self.r1 = r1
-        self.r2 = r2
-        self.r3 = r3
 
 
-def step1(item, gell):
+def step1(item, gell, Vol):
     t_res = 0
+    r = 0
     V = 0
     if item.collector == "Да" and item.plast != "н/д":
         for i in range(10000):
@@ -27,18 +23,18 @@ def step1(item, gell):
             P = Ppl+m*y+m*float(gell.get("Q, м3/сут"))/86400*math.log(r/D)/(2*math.pi*float(item.permeability)*10**(-15)*float(item.thickness))
             V = float(gell.get("Q, м3/сут"))/86400*t
 
-            if P <= Pkp and V <= 100:
+            if P <= Pkp and V <= Vol:
                 t_res = t
             else:
                 return t_res, V
     return t_res, V
 
 
-def step2(t, item, gell):
-    if t != 0:
-        r1 = round(math.sqrt(t*float(gell[0].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
-        r2 = round(math.sqrt(t*float(gell[1].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
-        r3 = round(math.sqrt(t*float(gell[2].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
+def step2(t1,t2,t3, item, gell):
+    if t1 != 0:
+        r1 = round(math.sqrt((t1+t2+t3)*float(gell[0].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
+        r2 = round(math.sqrt((t2+t3)*float(gell[1].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
+        r3 = round(math.sqrt((t3)*float(gell[2].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
     else:
         r1 = 0
         r2 = 0
@@ -63,12 +59,9 @@ def get_gis_calc(gis):
             k_g += float(gis[i].thickness)*float(gis[i].permeability)
     return h_w , h_g, m_w/h_w, m_g/h_g, k_w/h_w, k_g/h_g
 
-def get_k_h(gis, h_w , h_g, k_w, k_g,V_data):
+def get_k_h(gis, h_w , h_g, k_w, k_g):
     res1 = 0
     res2 = 0
-    V1 = 0
-    V2 = 0
-    V3 = 0
     Volumes = []
     for i in range(len(gis)):
         if gis[i].thickness not in ['','None'] and gis[i].permeability not in ['','None']:
@@ -77,16 +70,9 @@ def get_k_h(gis, h_w , h_g, k_w, k_g,V_data):
     for i in range(len(gis)):
         if gis[i].thickness not in ['','None'] and gis[i].permeability not in ['','None']:
             res2 = float(gis[i].thickness)*float(gis[i].permeability)/(h_w*k_w+h_g*k_g)*res1
-            V1 = res2*V_data[i][0]
-            V2 = res2*V_data[i][1]
-            V3 = res2*V_data[i][2]
-            Volumes.append([V1, V2, V3])
+            Volumes.append(res2*100)
         else:
-            Volumes.append([0, 0, 0])
-        
-
-        
-
+            Volumes.append(0)
     return Volumes
 
 
@@ -101,16 +87,17 @@ def calculation_click(data):
     gell.append(cache_gelling.get('Полимер 2'))
     gell.append(cache_gelling.get('Полимер 3'))
 
+    h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
+    Volumes = get_k_h(data.gis, h_w , h_g, k_w, k_g)
     radius_data = []
-    volume_data = []
+    temp_data = []
     for i in range(len(data.gis)):
-        t1, V1 = step1(data.gis[i], gell[0])
-        t2, V2 = step1(data.gis[i], gell[1])
-        t3, V3 = step1(data.gis[i], gell[2])
-        t = t1 + t2 + t3
-        r1, r2, r3 = step2(t, data.gis[0], gell)
-        volume_data.append([V1, V2, V3])
+        t1, V1 = step1(data.gis[i], gell[0], Volumes[i])
+        t2, V2 = step1(data.gis[i], gell[1], Volumes[i])
+        t3, V3 = step1(data.gis[i], gell[2],Volumes[i])
+        r1, r2, r3 = step2(t1, t2, t3, data.gis[i], gell)
         radius_data.append([r1, r2, r3])
+        temp_data.append([i+1, t1, t2, t3])
 
 
     image = io.BytesIO()
@@ -121,14 +108,16 @@ def calculation_click(data):
     new_index = {i: f'{i+1}-й инт.' for i in range(len(df)+1)}
     df = df.rename(index=new_index)
     df = df[::-1]
-    ax = df.plot.barh(stacked=True, figsize=(10, 12))
+    ax = df.plot(kind='barh', stacked=True, width=1, figsize=(10, 12))
+    ax.set_xticks(range(len(df.columns)))
+    ax.set_xticklabels([], rotation=90)
     for p in ax.patches:
         left, bottom, width, height = p.get_bbox().bounds
-        ax.annotate(str(width.round(2)), xy=(left+width/2, bottom+height/2), 
+        temp = str(width.round(2)) if width != 0 else ''
+        ax.annotate(temp, xy=(left+width/2, bottom+height/2), 
                     ha='center', va='center')
-    ax.figure.savefig(image)
+    ax.figure.savefig("image.png")
 
 
-    h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
-    #get_k_h(data.gis, h_w , h_g, k_w, k_g, volume_data
-    return radius_data, image
+    
+    print(df)
