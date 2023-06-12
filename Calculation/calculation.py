@@ -79,23 +79,15 @@ def get_k_h(gis, h_w , h_g, k_w, k_g):
 
 
 def calculation_click(data):
-    cachefile_gelling = CacheFile("Gelling")
-    cache_gelling = cachefile_gelling.read().data
-    
-    gell = []
-    gell.append(cache_gelling.get('Полимер'))
-    gell.append(cache_gelling.get('Полимер 2'))
-    gell.append(cache_gelling.get('Полимер 3'))
-
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
     Volumes = get_k_h(data.gis, h_w , h_g, k_w, k_g)
     radius_data = []
     temp_data = []
     for i in range(len(data.gis)):
-        t1, V1 = step1(data.gis[i], gell[0], Volumes[i])
-        t2, V2 = step1(data.gis[i], gell[1], Volumes[i])
-        t3, V3 = step1(data.gis[i], gell[2],Volumes[i])
-        r1, r2, r3 = step2(t1, t2, t3, data.gis[i], gell)
+        t1, V1 = step1(data.gis[i], data.gelling[0], Volumes[i])
+        t2, V2 = step1(data.gis[i], data.gelling[1], Volumes[i])
+        t3, V3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
         temp_data.append([i+1, t1, t2, t3])
 
