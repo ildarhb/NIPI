@@ -56,7 +56,6 @@ def get_graph_data(h_w, m_w, k_w, gell, t1_w, t2_w, t3_w):
 
 
 def step1fin(h_w, m_w, k_w, gell, Vol):
-    P_data = []
     for i in range(10000):
         t = (i+1)*30
         r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
@@ -70,6 +69,7 @@ def step1fin(h_w, m_w, k_w, gell, Vol):
             t_res = t
         else:
             return t_res
+    return t_res
 
 def step2fin(t1,t2,t3, h_w, gell):
     if t1 != 0:
@@ -237,7 +237,7 @@ def calculation_click(data):
         temp = str(width.round(2)) if width != 0 else ''
         ax1.annotate(temp, xy=(left+width/2, bottom+height/2), 
                     ha='center', va='center')
-    ax1.figure.savefig('image4.png')
+    #ax1.figure.savefig('image4.png')
 
     
     radius_data.insert(0, [r1_g, r2_g, r3_g])
@@ -264,14 +264,9 @@ def calculation_click(data):
     plt.plot(t_data,P_data)
     plt.plot(t_data,P_data, 'b', label='P, атм')
     plt.plot(t_data,Pust_data, 'g', label='Pуст, атм')
-    plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
+    #plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
     parallel_line_y = 390
     plt.axhline(y=parallel_line_y, color='r', linestyle='--', label='Pкрт, атм')
     plt.xlabel('Время закачки, мин')
     plt.ylabel('Давление, атм / Объем, м3')
-    ax2 = plt.gca()
-    ax2.figure.savefig('image4.png')
-
-    print(ustoy_data)
-
-    return [radius_data, ustoy_data, ax1, ax2]
+    return [radius_data, ustoy_data, ax1, plt]
