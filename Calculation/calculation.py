@@ -269,4 +269,5 @@ def calculation_click(data):
     plt.axhline(y=parallel_line_y, color='r', linestyle='--', label='Pкрт, атм')
     plt.xlabel('Время закачки, мин')
     plt.ylabel('Давление, атм / Объем, м3')
+    plt.show()
     return [radius_data, ustoy_data, ax1, plt]
