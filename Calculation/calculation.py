@@ -189,6 +189,42 @@ def ustoy(gis, radius_data):
         res.append([temp1, temp2, temp3, temp4])
     return res
 
+def calcQ(gis, radius, gelling, ustoy):
+    dP = 7.1*10**5
+    spz = 0.00082
+    Rc = 250
+    D = 0.108 
+    
+    Res = 0
+    for i in range(len(gis)):
+        if gis[i].permeability != '':
+            temp = 2*math.pi*float(gis[i].permeability)*10**(-15)*float(gis[i].thickness)*dP/spz
+            ln1 = (math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D) + math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D))**(-1)
+            ln2 = (math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D) + math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D))**(-1)
+            ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
+            ln_min = min(ln1, ln2, ln3)
+            Q1 = ln_min*temp*86400
+            if ustoy[i][0] == 'да' or ustoy[i][1] == 'да' or ustoy[i][2] == 'да':
+                Q1 = 0
+            if gis[i].curr_saturation != "В":
+                Q1 = 0
+            ln1 = (math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D) + float(gelling[0].get("Rост_в"))*math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D))**(-1)
+            ln2 = (math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D) + float(gelling[1].get("Rост_в"))*math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D))**(-1)
+            ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + float(gelling[2].get("Rост_в"))*math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
+            ln_min = min(ln1, ln2, ln3)
+            Q = ln_min*temp*86400
+            # if ustoy[i][0] == 'да' or ustoy[i][1] == 'да' or ustoy[i][2] == 'да':
+            #     Q = 0
+            if gis[i].curr_saturation != "В":
+                Q = 0
+            # if gis[i].paker_isolation == "нет":
+            #     Q = Q1
+            Res += Q
+    return Res
+        
+        
+
+
 
     
 def calculation_click(data):
@@ -215,6 +251,9 @@ def calculation_click(data):
     radius_data.insert(0, [r1_g, r2_g, r3_g])
     radius_data.insert(0, [r1_w, r2_w, r3_w])
     ustoy_data = ustoy(data.gis, radius_data)
+
+    #res = calcQ(data.gis, radius_data[2:], data.gelling, ustoy_data[2:])
+
     ustoy_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м', 'Экран'])
     ustoy_data[0].insert(0, 'Устойчивость экранов')
     ustoy_data[1].insert(0, 'Рез-т. В')
