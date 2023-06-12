@@ -7,6 +7,31 @@ import matplotlib.pyplot as plt
 import numpy as np
 import io
 
+def step1fin(h_w, m_w, k_w, gell, Vol):
+    for i in range(10000):
+        t = (i+1)*30
+        r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
+        w = r/t
+        y = 4*alpha*w/(math.sqrt(8*float(k_w)*10**(-15)*float(m_w)/100))
+        m = float(gell.get("К, Па*с"))*y**(float(gell.get("n"))-1)
+        P = Ppl+m*y+m*float(gell.get("Q, м3/сут"))/86400*math.log(r/D)/(2*math.pi*float(k_w)*10**(-15)*float(h_w))
+        V = float(gell.get("Q, м3/сут"))/86400*t
+
+        if P <= Pkp and V <= Vol:
+            t_res = t
+        else:
+            return t_res
+
+def step2fin(t1,t2,t3, h_w, gell):
+    if t1 != 0:
+        r1 = round(math.sqrt((t1+t2+t3)*float(gell[0].get("Q, м3/сут"))/(2*math.pi*h_w*86400))+D, 2)
+        r2 = round(math.sqrt((t2+t3)*float(gell[1].get("Q, м3/сут"))/(2*math.pi*h_w*86400))+D, 2)
+        r3 = round(math.sqrt((t3)*float(gell[2].get("Q, м3/сут"))/(2*math.pi*h_w*86400))+D, 2)
+    else:
+        r1 = 0
+        r2 = 0
+        r3 = 0
+    return r1, r2, r3
 
 
 def step1(item, gell, Vol):
@@ -26,8 +51,8 @@ def step1(item, gell, Vol):
             if P <= Pkp and V <= Vol:
                 t_res = t
             else:
-                return t_res, V
-    return t_res, V
+                return t_res
+    return t_res
 
 
 def step2(t1,t2,t3, item, gell):
@@ -63,6 +88,9 @@ def get_k_h(gis, h_w , h_g, k_w, k_g):
     res1 = 0
     res2 = 0
     Volumes = []
+    Vol_w = 0
+    Vol_g = 0
+
     for i in range(len(gis)):
         if gis[i].thickness not in ['','None'] and gis[i].permeability not in ['','None']:
             res1 += float(gis[i].thickness)*float(gis[i].permeability)/(h_w*k_w+h_g*k_g)
@@ -71,25 +99,69 @@ def get_k_h(gis, h_w , h_g, k_w, k_g):
         if gis[i].thickness not in ['','None'] and gis[i].permeability not in ['','None']:
             res2 = float(gis[i].thickness)*float(gis[i].permeability)/(h_w*k_w+h_g*k_g)*res1
             Volumes.append(res2*100)
+            if gis[i].curr_saturation == 'В':
+                Vol_w += res2*100
+            else:
+                Vol_g += res2*100
         else:
             Volumes.append(0)
-    return Volumes
+    return Volumes, Vol_w, Vol_g
 
+def get_temp(data, a, b, c):
+    dP = 7.1*10**5
+    temp1 = 'x' if a*(D+data[0]) <= dP else 'да'
+    temp2 = 'x' if b*(D+data[1]) <= dP else 'да'
+    temp3 = 'x' if c*(D+data[2]) <= dP else 'да'
+    if temp1 == 'да' or temp2 == 'да' or temp3 == 'да':
+        temp4 = 'да'
+    elif temp1 == '-':
+        temp4 = '-'
+    else:
+        temp4 = 'x'
+    return temp1, temp2, temp3, temp4
+
+def ustoy(gis, radius_data):
+    res = []
+    res.append([get_temp(radius_data[0], G_kr_w1, G_kr_w2, G_kr_w3)])
+    res.append(get_temp(radius_data[1], G_kr_g1, G_kr_g2, G_kr_g3))
+
+    for i in range(len(gis)):       
+        if gis[i].curr_saturation == 'В':
+            temp1, temp2, temp3, temp4 = get_temp(radius_data[i+2], G_kr_w1, G_kr_w2, G_kr_w3)   
+        elif gis[i].curr_saturation == '':
+            temp1 = '-'
+            temp2 = '-'
+            temp3 = '-'
+            temp4 = '-'
+        else:
+            temp1, temp2, temp3, temp4 = get_temp(radius_data[i+2], G_kr_g1, G_kr_g2, G_kr_g3)            
+        res.append([temp1, temp2, temp3, temp4])
+    return res
 
 
 
 def calculation_click(data):
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
-    Volumes = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
     radius_data = []
-    temp_data = []
     for i in range(len(data.gis)):
-        t1, V1 = step1(data.gis[i], data.gelling[0], Volumes[i])
-        t2, V2 = step1(data.gis[i], data.gelling[1], Volumes[i])
-        t3, V3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
-        temp_data.append([i+1, t1, t2, t3])
+
+    t1_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
+
+    t1_g = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
+    t2_g = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
+    t3_g = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
+    r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
+
+    
 
 
     image = io.BytesIO()
@@ -100,6 +172,12 @@ def calculation_click(data):
     new_index = {i: f'{i+1}-й инт.' for i in range(len(df)+1)}
     df = df.rename(index=new_index)
     df = df[::-1]
+    row_w = pd.Series([r1_w, r2_w, r3_w], index=df.columns, name='Рез-т. В')
+    row_g = pd.Series([r1_g, r2_g, r3_g], index=df.columns, name='Рез-т. Г')
+    row = pd.Series([0,0,0], index=df.columns, name='')
+    df = pd.concat([df, row.to_frame().T])
+    df = pd.concat([df, row_g.to_frame().T])
+    df = pd.concat([df, row_w.to_frame().T])
     ax = df.plot(kind='barh', stacked=True, width=1, figsize=(10, 12))
     ax.set_xticks(range(len(df.columns)))
     ax.set_xticklabels([], rotation=90)
@@ -110,4 +188,10 @@ def calculation_click(data):
                     ha='center', va='center')
     ax.figure.savefig(image)
 
-    return radius_data, image
+    
+    radius_data.insert(0, [r1_g, r2_g, r3_g])
+    radius_data.insert(0, [r1_w, r2_w, r3_w])
+
+    ustoy_data = ustoy(data.gis, radius_data)
+
+    return radius_data, ustoy_data, image
