@@ -1,14 +1,14 @@
-from PyQt5 import QtWidgets, uic, QtCore
-from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox, QTableWidget
+from PyQt5 import QtWidgets, uic, QtGui
+from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox, QMainWindow
 from Calculation import initdata, calculation
 from WindowData import WindowData
 from CacheFile import CacheFile
 from UpdatedWidgets import UpgradedQTableWidget
 
-debug = False
+debug = True
 
 
-class Window(QtWidgets.QMainWindow):
+class Window(QMainWindow):
     def __init__(self):
         # Инициализация
         super(Window, self).__init__()
@@ -48,7 +48,7 @@ class Window(QtWidgets.QMainWindow):
 
         try:
             if debug:
-                file_data = initdata.get_gis("../doc/gis.xlsx")
+                file_data = initdata.get_gis("../doc/origin_gis.xlsx")
             else:
                 file_data = initdata.get_gis(file_name[0])
         except BaseException:
@@ -94,12 +94,10 @@ class Window(QtWidgets.QMainWindow):
         self.load_data()
 
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
-        print("Нажата кнопка Рассчитать")
         self.fill_data()
-        calculation.calculation_click(self.WindowData)
-        pass
-        # Фукнция Ильдара
-        # return self.WindowData
+        radius, stability, plot = calculation.calculation_click(self.WindowData)  # функция Ильдара для проведения всех вычислений
+        result_window = DialogResult(radius, stability, plot)
+        result_window.show()
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
         dialog_gelling = DialogAddGelling(self.cachefile_gelling)
@@ -277,3 +275,21 @@ class GellingContainer:
     def __len__(self):
         return len(self.data)
 
+
+class DialogResult(QMainWindow):
+    def __init__(self, radius, stability, plot):
+        super(DialogResult, self).__init__()
+        self.ui = uic.loadUi('ResultWindow.ui', self)
+        self.setWindowTitle("Вывод результатов вычислений")
+
+        self.label_image = self.ui.label_image
+
+        self.radius = radius
+        self.stability = stability
+        self.plot = plot
+
+        # self.show_image()
+
+    def show_image(self):
+        pixmap = QtGui.QPixmap(self.plot)
+        self.label_image.setPixmap(pixmap.scaled(self.label_image.size()))
