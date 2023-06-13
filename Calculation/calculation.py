@@ -347,6 +347,7 @@ def get_injection_image(data):
     #plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
     parallel_line_y = 390
     plt.axhline(y=parallel_line_y, color='r', linestyle='--', label='Pкрт, атм')
+    plt.legend()
     plt.xlabel('Время закачки, мин')
     plt.ylabel('Давление, атм / Объем, м3')
     plt.show()
