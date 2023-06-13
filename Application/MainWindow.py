@@ -96,8 +96,8 @@ class Window(QMainWindow):
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         self.fill_data()
         res_list = calculation.calculation_click(self.WindowData)
-        radius, stability, radius_plot, injection_plot = tuple(res_list)
-        result_window = DialogResult(radius, stability, radius_plot, injection_plot)
+        radius, stability, _, _ = tuple(res_list)
+        result_window = DialogResult(radius, stability, self.WindowData)
         result_window.show()
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
@@ -278,15 +278,16 @@ class GellingContainer:
 
 
 class DialogResult(QMainWindow):
-    def __init__(self, radius, stability, radius_plot, injection_plot):
+    def __init__(self, radius, stability, window_data: WindowData):
         super(DialogResult, self).__init__()
         self.ui = uic.loadUi('ResultWindow.ui', self)
         self.setWindowTitle("Вывод результатов вычислений")
 
         self.radius = radius
         self.stability = stability
-        self.radius_plot = radius_plot
-        self.injection_plot = injection_plot
+        # self.radius_plot = radius_plot
+        # self.injection_plot = injection_plot
+        self.window_data = window_data
 
         self.table_radius = self.ui.table_radius
         self.table_stability = self.ui.table_stability
@@ -298,10 +299,12 @@ class DialogResult(QMainWindow):
         self.fill_stability_table()
 
     def show_radius(self):
-        self.radius_plot.show()
+        calculation.get_radius_image(self.window_data)
+        # self.radius_plot.show()
 
     def show_injection(self):
-        self.injection_plot.show()
+        calculation.get_injection_image(self.window_data)
+        # self.injection_plot.show()
 
     def fill_radius_table(self):
         table = self.table_radius
