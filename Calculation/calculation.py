@@ -56,7 +56,6 @@ def get_graph_data(h_w, m_w, k_w, gell, t1_w, t2_w, t3_w):
 
 
 def step1fin(h_w, m_w, k_w, gell, Vol):
-    P_data = []
     for i in range(10000):
         t = (i+1)*30
         r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
@@ -70,6 +69,7 @@ def step1fin(h_w, m_w, k_w, gell, Vol):
             t_res = t
         else:
             return t_res
+    return t_res
 
 def step2fin(t1,t2,t3, h_w, gell):
     if t1 != 0:
@@ -189,6 +189,42 @@ def ustoy(gis, radius_data):
         res.append([temp1, temp2, temp3, temp4])
     return res
 
+def calcQ(gis, radius, gelling, ustoy):
+    dP = 7.1*10**5
+    spz = 0.00082
+    Rc = 250
+    D = 0.108 
+    
+    Res = 0
+    for i in range(len(gis)):
+        if gis[i].permeability != '':
+            temp = 2*math.pi*float(gis[i].permeability)*10**(-15)*float(gis[i].thickness)*dP/spz
+            ln1 = (math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D) + math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D))**(-1)
+            ln2 = (math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D) + math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D))**(-1)
+            ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
+            ln_min = min(ln1, ln2, ln3)
+            Q1 = ln_min*temp*86400
+            if ustoy[i][0] == 'да' or ustoy[i][1] == 'да' or ustoy[i][2] == 'да':
+                Q1 = 0
+            if gis[i].curr_saturation != "В":
+                Q1 = 0
+            ln1 = (math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D) + float(gelling[0].get("Rост_в"))*math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D))**(-1)
+            ln2 = (math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D) + float(gelling[1].get("Rост_в"))*math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D))**(-1)
+            ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + float(gelling[2].get("Rост_в"))*math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
+            ln_min = min(ln1, ln2, ln3)
+            Q = ln_min*temp*86400
+            # if ustoy[i][0] == 'да' or ustoy[i][1] == 'да' or ustoy[i][2] == 'да':
+            #     Q = 0
+            if gis[i].curr_saturation != "В":
+                Q = 0
+            # if gis[i].paker_isolation == "нет":
+            #     Q = Q1
+            Res += Q
+    return Res
+        
+        
+
+
 
     
 def calculation_click(data):
@@ -211,9 +247,50 @@ def calculation_click(data):
     t2_g = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
     t3_g = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
     r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
-
     
+    radius_data.insert(0, [r1_g, r2_g, r3_g])
+    radius_data.insert(0, [r1_w, r2_w, r3_w])
+    ustoy_data = ustoy(data.gis, radius_data)
 
+    #res = calcQ(data.gis, radius_data[2:], data.gelling, ustoy_data[2:])
+
+    ustoy_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м', 'Экран'])
+    ustoy_data[0].insert(0, 'Устойчивость экранов')
+    ustoy_data[1].insert(0, 'Рез-т. В')
+    ustoy_data[2].insert(0, 'Рез-т. Г')
+    for i in range(len(ustoy_data)-3):
+        ustoy_data[i+3].insert(0, f'{i+1}-й инт.')
+
+    radius_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м'])
+    radius_data[0].insert(0, 'Радиусы эранов')
+    radius_data[1].insert(0, 'Рез-т. В')
+    radius_data[2].insert(0, 'Рез-т. Г')
+    for i in range(len(radius_data)-3):
+        radius_data[i+3].insert(0, f'{i+1}-й инт.')
+
+    return [radius_data, ustoy_data, '', plt]
+
+
+def get_radius_image(data):
+    h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
+    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    radius_data = []
+    for i in range(len(data.gis)):
+        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
+        radius_data.append([r1, r2, r3])
+
+    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
+
+    t1_g = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
+    t2_g = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
+    t3_g = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
+    r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
 
     image1 = io.BytesIO()
     df = pd.DataFrame(radius_data)
@@ -237,41 +314,39 @@ def calculation_click(data):
         temp = str(width.round(2)) if width != 0 else ''
         ax1.annotate(temp, xy=(left+width/2, bottom+height/2), 
                     ha='center', va='center')
-    ax1.figure.savefig('image4.png')
+    plt.show()
 
+
+def get_injection_image(data):
+    h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
+    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    radius_data = []
+    for i in range(len(data.gis)):
+        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
+        radius_data.append([r1, r2, r3])
+
+    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
+
+    t1_g = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
+    t2_g = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
+    t3_g = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
+    r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
     
-    radius_data.insert(0, [r1_g, r2_g, r3_g])
-    radius_data.insert(0, [r1_w, r2_w, r3_w])
-    ustoy_data = ustoy(data.gis, radius_data)
-    ustoy_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м', 'Экран'])
-    ustoy_data[0].insert(0, 'Устойчивость экранов')
-    ustoy_data[1].insert(0, 'Рез-т. В')
-    ustoy_data[2].insert(0, 'Рез-т. Г')
-    for i in range(len(ustoy_data)-3):
-        ustoy_data[i+3].insert(0, f'{i+1}-й инт.')
-
-    radius_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м'])
-    radius_data[0].insert(0, 'Радиусы эранов')
-    radius_data[1].insert(0, 'Рез-т. В')
-    radius_data[2].insert(0, 'Рез-т. Г')
-    for i in range(len(radius_data)-3):
-        radius_data[i+3].insert(0, f'{i+1}-й инт.')
-
-
 
     P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
     plt.figure(figsize=(20, 12))
     plt.plot(t_data,P_data)
     plt.plot(t_data,P_data, 'b', label='P, атм')
     plt.plot(t_data,Pust_data, 'g', label='Pуст, атм')
-    plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
+    #plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
     parallel_line_y = 390
     plt.axhline(y=parallel_line_y, color='r', linestyle='--', label='Pкрт, атм')
     plt.xlabel('Время закачки, мин')
     plt.ylabel('Давление, атм / Объем, м3')
-    ax2 = plt.gca()
-    ax2.figure.savefig('image4.png')
-
-    print(ustoy_data)
-
-    return [radius_data, ustoy_data, ax1, ax2]
+    plt.show()
