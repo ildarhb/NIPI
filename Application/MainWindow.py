@@ -5,7 +5,7 @@ from WindowData import WindowData
 from CacheFile import CacheFile
 from UpdatedWidgets import UpgradedQTableWidget
 
-debug = True
+debug = False
 
 
 class Window(QMainWindow):
