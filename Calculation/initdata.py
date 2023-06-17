@@ -171,17 +171,17 @@ def get_gis(path="doc/origin_gis.xlsx"):
             #пропласток
             proplast =  sheet[row][3].value,
             #глубина
-            depth =  round(sheet[row][4].value),
+            depth =  sheet[row][4].value,
             #толщина
-            thickness =  round(sheet[row][5].value),
+            thickness =  sheet[row][5].value,
             #глубина абсотлют
-            abs_depth =  round(sheet[row][7].value,2),
+            abs_depth =  sheet[row][7].value,
             #тольщина абсолют
-            abs_thickness =  round(sheet[row][8].value,2),
+            abs_thickness =  sheet[row][8].value,
             #пористость
-            porosity =  round(sheet[row][20].value, 2) if sheet[row][20].value != None else 0,
+            porosity =  sheet[row][20].value if sheet[row][20].value != None else 0,
             #проницаемость
-            permeability =  round(sheet[row][21].value, 2) if sheet[row][21].value != None else 0,
+            permeability =  sheet[row][21].value if sheet[row][21].value != None else 0,
             #литология
             lithology = sheet[row][11].value,
             #коллектор
