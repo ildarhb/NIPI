@@ -325,7 +325,7 @@ def get_radius_image(data):
     df['Экран из 2 полимера, м'] -= df['Экран из 3 полимера, м']
     df['Экран из 1 полимера, м'] -= (df['Экран из 2 полимера, м']+df['Экран из 3 полимера, м'])
 
-    ax1 = df.plot(kind='barh', stacked=True, width=1, figsize=(10, 12))
+    ax1 = df.plot(kind='barh', stacked=True, width=1, figsize=(10, 12), color=['orange', 'gray', 'lightgray'])
     ax1.set_xticks(range(len(df.columns)))
 
     temps=[]
