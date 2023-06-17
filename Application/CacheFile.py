@@ -1,4 +1,5 @@
 from pickle import dump, load
+from os import mkdir
 
 
 class CacheFile:
@@ -9,6 +10,8 @@ class CacheFile:
         try:
             with open(self.path, 'wb') as file:
                 dump(new_object, file)
+        except FileNotFoundError:
+            mkdir('Cache')
         except BaseException:
             raise BaseException
 
