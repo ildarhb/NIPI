@@ -1,6 +1,7 @@
 import math
 from Calculation.add_init import *
 import pandas as pd
+import numpy as np
 import io
 import matplotlib.pyplot as plt
 
@@ -41,7 +42,7 @@ def get_graph_data(h_w, m_w, k_w, gell, t1_w, t2_w, t3_w):
             m_res = (m1+m2)/2
         else:
             P_res = (P1+P2+P3)/3
-            m_res = (m1+m2+m3)/2
+            m_res = (m1+m2+m3)/3
 
         if t > (t1_w+t2_w+t3_w):
             P_res = 0
@@ -82,11 +83,25 @@ def step2fin(t1,t2,t3, h_w, gell):
         r3 = 0
     return r1, r2, r3
 
+def get_r_data(h_w, gell, r_max, t_max):
+    r_data = []
+    for i in range(10000):
+        t = (i+1)*30
+        if t < t_max:
+            r_data.append(0)
+        else:
+            r = math.sqrt((t-t_max)*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
+            if r < r_max:
+                r_data.append(r)
+            else:
+                r_data.append(r_max)
+    return r_data
 
 def step1(item, gell, Vol):
     t_res = 0
     r = 0
     V = 0
+    r_data = []
     if item.collector == "Да" and item.plast != "н/д":
         for i in range(10000):
             t = (i+1)*30
@@ -105,7 +120,7 @@ def step1(item, gell, Vol):
 
 
 def step2(t1,t2,t3, item, gell):
-    if t1 != 0:
+    if (t1+t2+t3) != 0:
         r1 = round(math.sqrt((t1+t2+t3)*float(gell[0].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
         r2 = round(math.sqrt((t2+t3)*float(gell[1].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
         r3 = round(math.sqrt((t3)*float(gell[2].get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D, 2)
@@ -143,10 +158,9 @@ def get_k_h(gis, h_w , h_g, k_w, k_g):
     for i in range(len(gis)):
         if gis[i].thickness not in ['','None'] and gis[i].permeability not in ['','None']:
             res1 += float(gis[i].thickness)*float(gis[i].permeability)/(h_w*k_w+h_g*k_g)
-
     for i in range(len(gis)):
         if gis[i].thickness not in ['','None'] and gis[i].permeability not in ['','None']:
-            res2 = float(gis[i].thickness)*float(gis[i].permeability)/(h_w*k_w+h_g*k_g)*res1
+            res2 = float(gis[i].thickness)*float(gis[i].permeability)/(h_w*k_w+h_g*k_g)*(1/res1)
             Volumes.append(res2*100)
             if gis[i].curr_saturation == 'В':
                 Vol_w += res2*100
@@ -237,6 +251,8 @@ def calculation_click(data):
         t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
+    
+
 
     t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
     t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
@@ -300,20 +316,41 @@ def get_radius_image(data):
     new_index = {i: f'{i+1}-й инт.' for i in range(len(df)+1)}
     df = df.rename(index=new_index)
     df = df[::-1]
-    row_w = pd.Series([r1_w, r2_w, r3_w], index=df.columns, name='Рез-т. В')
-    row_g = pd.Series([r1_g, r2_g, r3_g], index=df.columns, name='Рез-т. Г')
+    row_w = pd.Series([r3_w, r2_w, r1_w], index=df.columns, name='Рез-т. В')
+    row_g = pd.Series([r3_g, r2_g, r1_g], index=df.columns, name='Рез-т. Г')
     row = pd.Series([0,0,0], index=df.columns, name='')
     df = pd.concat([df, row.to_frame().T])
     df = pd.concat([df, row_g.to_frame().T])
     df = pd.concat([df, row_w.to_frame().T])
+    df['Экран из 2 полимера, м'] -= df['Экран из 3 полимера, м']
+    df['Экран из 1 полимера, м'] -= (df['Экран из 2 полимера, м']+df['Экран из 3 полимера, м'])
+
     ax1 = df.plot(kind='barh', stacked=True, width=1, figsize=(10, 12))
     ax1.set_xticks(range(len(df.columns)))
-    ax1.set_xticklabels([], rotation=90)
-    for p in ax1.patches:
+
+    temps=[]
+    for i, p in enumerate(ax1.patches):
         left, bottom, width, height = p.get_bbox().bounds
-        temp = str(width.round(2)) if width != 0 else ''
+        temps.append(width.round(2))
+
+    for i in range(len(temps)):
+        if i > len(df) and i <= 2*len(df):
+            temps[i] = temps[i] + temps[i-len(df)]
+        elif i > len(df) and i <= 3*len(df):
+            temps[i] = temps[i] + temps[i-len(df)]
+
+    y_ticks = np.arange(0, math.ceil(max(temps))+0.2 , 0.2)
+    ax1.set_xticks(y_ticks)
+    ax1.xaxis.set_ticks_position('top')
+
+    for i, p in enumerate(ax1.patches):
+        left, bottom, width, height = p.get_bbox().bounds
+        temp = str(temps[i].round(2)) if width != 0 else ''
         ax1.annotate(temp, xy=(left+width/2, bottom+height/2), 
                     ha='center', va='center')
+    ax1.set_xlabel("Радиус экрана, м")
+    ax1.xaxis.set_label_coords(0.5, 1.08)
+    ax1.set_ylabel("Интервал притока")
     plt.show()
 
 
@@ -331,23 +368,51 @@ def get_injection_image(data):
     t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
     t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
     t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
-    r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
-
-    t1_g = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
-    t2_g = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
-    t3_g = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
-    r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
-    
 
     P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
     plt.figure(figsize=(20, 12))
     plt.plot(t_data,P_data)
     plt.plot(t_data,P_data, 'b', label='P, атм')
     plt.plot(t_data,Pust_data, 'g', label='Pуст, атм')
-    #plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
     parallel_line_y = 390
     plt.axhline(y=parallel_line_y, color='r', linestyle='--', label='Pкрт, атм')
     plt.legend()
     plt.xlabel('Время закачки, мин')
     plt.ylabel('Давление, атм / Объем, м3')
     plt.show()
+
+def get_radius_graph(data):
+    h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
+    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    radius_data = []
+    for i in range(len(data.gis)):
+        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
+        radius_data.append([r1, r2, r3])
+
+    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
+
+    r1_data = get_r_data(h_w, data.gelling[0], r1_w, 0)
+    r2_data = get_r_data(h_w, data.gelling[1], r2_w, t1_w)
+    r3_data = get_r_data(h_w, data.gelling[2], r3_w, t1_w+t2_w)
+    print(t1_w, t2_w, t3_w)
+
+
+    P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
+    plt.figure(figsize=(20, 12))
+    plt.plot(t_data,r1_data, color='yellow', label='Экран из 1 полимера, м')
+    plt.plot(t_data,r2_data, color='orange', label='Экран из 2 полимера, м')
+    plt.plot(t_data,r3_data, color='grey', label='Экран из 3 полимера, м')
+    plt.plot(t_data,m_data, color='black', linestyle='dashed', label='ⴜ (t) , Па')
+    plt.legend()
+    plt.xlabel('Время закачки, мин')
+    plt.ylabel('Давление, атм / Объем, м3')
+    plt.show()
+
+
+

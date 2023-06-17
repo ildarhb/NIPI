@@ -304,6 +304,7 @@ class DialogResult(QMainWindow):
 
     def show_injection(self):
         calculation.get_injection_image(self.window_data)
+        calculation.get_radius_graph(self.window_data)
         # self.injection_plot.show()
 
     def fill_radius_table(self):
