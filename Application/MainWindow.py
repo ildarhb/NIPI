@@ -40,10 +40,10 @@ class Window(QMainWindow):
         self.combobox_gelling3.currentIndexChanged.connect(self.combobox_gelling_changed3)
 
         # инициализация моих функций
-        self.update_gelling()
         self.init_table_after_watering()
         self.init_table_before_watering()
         self.init_table_gelling()
+        self.update_gelling_items()
 
     def closeEvent(self, *args, **kwargs):
         self.save_data()
@@ -105,10 +105,10 @@ class Window(QMainWindow):
             table.fill_data(cache)
 
     def init_table_gelling(self):
-        table = self.tableGelling
+        columns = DialogAddGelling.columns  # получаем колонки из объекта добавления составов
+        rows = ('1', '2', '3')
 
-        columns = DialogAddGelling(self.cache_gelling).columns
-        table.fill_labels(('1', '2', '3'), columns)
+        self.tableGelling.fill_labels(rows, columns)
 
     # ОБРАБОТЧИКИ СОБЫТИЙ
 
@@ -117,7 +117,7 @@ class Window(QMainWindow):
         self.load_data()
 
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
-        self.fill_data()
+        self.fill_WindowData()
         res_list = calculation.calculation_click(self.WindowData)
         radius, stability, _, _ = tuple(res_list)
         result_window = DialogResult(radius, stability, self.WindowData)
@@ -126,7 +126,7 @@ class Window(QMainWindow):
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
         dialog_gelling = DialogAddGelling(self.cachefile_gelling)
         dialog_gelling.add_data()
-        self.update_gelling()
+        self.update_gelling_items()
 
     def combobox_gelling_changed1(self):
         gelling_key = self.combobox_gelling1.currentText()
@@ -176,24 +176,27 @@ class Window(QMainWindow):
                 self.tableWatering.setItem(row_index, column_index, QTableWidgetItem(str(column.__getattribute__(row))))
         return file_data
 
-    def fill_data(self):  # Заполнение класса WindowData
+    def fill_WindowData(self):  # Заполнение класса WindowData
         self.WindowData.gis.clear()
 
         table = self.tableWatering
         row_count = table.rowCount()
         column_count = table.columnCount()
 
-        # Заполняем обводнение
+        # Заполняем ГИС
         for column_index in range(0, column_count):
             current_row = (table.item(row_index, column_index) for row_index in range(row_count))  # столбец таблицы
             current_row_text = (item.text() if item is not None else "" for item in current_row)  # текстовый столбец
             init_gis_row = initdata.InitGis(*tuple(current_row_text))  # делаем из текста класс InitGis
             self.WindowData.gis.append(init_gis_row)  # добавляем класс в список
 
-        self.WindowData.gis_after_watering = self.tableAfterWatering.get_dict_column()
-        self.WindowData.gis_before_watering = self.tableBeforeWatering.get_dict_column()
+        self.WindowData.gis_after_watering = self.tableAfterWatering.dict_column()
+        self.WindowData.gis_before_watering = self.tableBeforeWatering.dict_column()
 
-    def update_gelling(self):
+        for index, item in enumerate(self.tableGelling.table_items()):
+            self.WindowData.gelling[index] = item
+
+    def update_gelling_items(self):  # обновляем данные в выпадающих списках
         self.combobox_gelling1.clear()
         self.combobox_gelling2.clear()
         self.combobox_gelling3.clear()
@@ -206,23 +209,25 @@ class Window(QMainWindow):
 
         if len(self.cache_gelling) == 0:
             return
+
         for gelling in self.cache_gelling:
             self.combobox_gelling1.addItem(gelling)
             self.combobox_gelling2.addItem(gelling)
             self.combobox_gelling3.addItem(gelling)
 
+        self.fill_table_gelling(1, self.combobox_gelling1.currentText())
+        self.fill_table_gelling(2, self.combobox_gelling2.currentText())
+        self.fill_table_gelling(3, self.combobox_gelling3.currentText())
+
     def fill_table_gelling(self, num: int, key: str):
         if key == '':
             return
 
-        num -= 1  # индекс стоки на 1 меньше номера колонки
+        num -= 1  # индекс стоки на 1 меньше номера строки
 
         gelling_data = self.cache_gelling[key]
-
-        for index, value in enumerate(gelling_data.values()):  # Заполнение таблицы
-            self.tableGelling.table.setItem(num, index, QTableWidgetItem(value))
-
-        self.WindowData.gelling[num] = gelling_data  # Заполняем выходной класс
+        data = gelling_data.values()
+        self.tableGelling.fill_row(data, num)
 
     def save_data(self):  # сохраняем данные при закрытии проги
         self.cachefile_tableBeforeWatering.write(self.tableBeforeWatering.table_items())
@@ -239,8 +244,7 @@ class Window(QMainWindow):
 
 
 class DialogAddGelling(QDialog):
-    def __init__(self, cache_file):
-        self.columns = {"Name": None,
+    columns = {"Name": None,
                         "К, Па*с": None,
                         "n": None,
                         "Rост_в": None,
@@ -251,6 +255,8 @@ class DialogAddGelling(QDialog):
                         "V, м3": None,
                         "Пл-ть, г/см3": None,
                         "Время геле-обр-я., мин": None}
+
+    def __init__(self, cache_file):
         super(DialogAddGelling, self).__init__()
         self.ui = uic.loadUi("DialogAddGelling.ui", self)
         self.setWindowTitle("Добавление гелеобразующего состава")

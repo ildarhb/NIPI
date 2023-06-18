@@ -17,15 +17,18 @@ class UpgradedTableWidget:
         self.table.setColumnCount(len(self.HorizontalHeaderLabels))
         self.table.setHorizontalHeaderLabels(self.HorizontalHeaderLabels)
 
-    def get_dict_column(self, index=0):
-        items = self.table.get_table_items()[index]
+    def dict_column(self, index=0):
+        items = self.table_items()[index]
         names = self.VerticalHeaderLabels
         return {key: value for key, value in zip(names, items)}
 
-    def fill_data(self, data: list[list]):
+    def fill_data(self, data):
         for ind_row, row in enumerate(data):
-            for ind_item, item in enumerate(row):
-                self.table.setItem(ind_row, ind_item, QTableWidgetItem(str(item)))
+            self.fill_row(row, ind_row)
+
+    def fill_row(self, row, row_index):
+        for ind_item, item in enumerate(row):
+            self.table.setItem(row_index, ind_item, QTableWidgetItem(str(item)))
 
     def table_items(self):
         row_count = self.table.rowCount()
