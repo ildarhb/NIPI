@@ -201,8 +201,10 @@ class Window(QMainWindow):
         self.WindowData.gis_after_watering = self.tableAfterWatering.dict_column()
         self.WindowData.gis_before_watering = self.tableBeforeWatering.dict_column()
 
+        gelling_columns = DialogAddGelling.columns
+        gelling_columns.pop('Name')
         for index, item in enumerate(self.tableGelling.items()):
-            self.WindowData.gelling[index] = dict(zip(DialogAddGelling.columns, item))
+            self.WindowData.gelling[index] = dict(zip(gelling_columns, item))
 
     def update_gelling_items(self):  # обновляем данные в выпадающих списках
         self.combobox_gelling1.clear()
