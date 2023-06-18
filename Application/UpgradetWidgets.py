@@ -18,9 +18,14 @@ class UpgradedTableWidget:
         self.table.setHorizontalHeaderLabels(self.HorizontalHeaderLabels)
 
     def dict_column(self, index=0):
-        items = self.table_items()[index]
         names = self.VerticalHeaderLabels
-        return {key: value for key, value in zip(names, items)}
+        items = [item[index] for item in self.items()]
+        return dict(zip(names, items))
+
+    def dict_row(self, row=0):
+        names = self.HorizontalHeaderLabels
+        items = self.items()[row]
+        return dict(zip(names, items))
 
     def fill_data(self, data):
         for ind_row, row in enumerate(data):
@@ -30,7 +35,7 @@ class UpgradedTableWidget:
         for ind_item, item in enumerate(row):
             self.table.setItem(row_index, ind_item, QTableWidgetItem(str(item)))
 
-    def table_items(self):
+    def items(self):
         row_count = self.table.rowCount()
         column_count = self.table.columnCount()
         table_data = list()

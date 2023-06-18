@@ -106,6 +106,7 @@ class Window(QMainWindow):
 
     def init_table_gelling(self):
         columns = DialogAddGelling.columns  # получаем колонки из объекта добавления составов
+        columns.pop('Name')
         rows = ('1', '2', '3')
 
         self.tableGelling.fill_labels(rows, columns)
@@ -124,9 +125,15 @@ class Window(QMainWindow):
         result_window.show()
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
-        dialog_gelling = DialogAddGelling(self.cachefile_gelling)
-        dialog_gelling.add_data()
-        self.update_gelling_items()
+        dialog_gelling = DialogAddGelling(self.cachefile_gelling)  # создаем окно выбора полимеров
+        name, new_gelling = dialog_gelling.add_data()  # вызываем окно
+        if new_gelling is None:
+            return
+        self.cache_gelling = self.cachefile_gelling.read()
+        self.combobox_gelling1.addItem(name)
+        self.combobox_gelling2.addItem(name)
+        self.combobox_gelling3.addItem(name)
+
 
     def combobox_gelling_changed1(self):
         gelling_key = self.combobox_gelling1.currentText()
@@ -193,7 +200,7 @@ class Window(QMainWindow):
         self.WindowData.gis_after_watering = self.tableAfterWatering.dict_column()
         self.WindowData.gis_before_watering = self.tableBeforeWatering.dict_column()
 
-        for index, item in enumerate(self.tableGelling.table_items()):
+        for index, item in enumerate(self.tableGelling.items()):
             self.WindowData.gelling[index] = dict(zip(DialogAddGelling.columns, item))
 
     def update_gelling_items(self):  # обновляем данные в выпадающих списках
@@ -202,10 +209,14 @@ class Window(QMainWindow):
         self.combobox_gelling3.clear()
 
         self.cache_gelling = self.cachefile_gelling.read()
-        if self.cache_gelling is not None:
-            self.cache_gelling = self.cache_gelling.data
-        else:
+
+        if self.cache_gelling is None:
             return
+
+        # if self.cache_gelling is not None:
+        #     self.cache_gelling = self.cache_gelling.data
+        # else:
+        #     return
 
         if len(self.cache_gelling) == 0:
             return
@@ -230,8 +241,8 @@ class Window(QMainWindow):
         self.tableGelling.fill_row(data, num)
 
     def save_data(self):  # сохраняем данные при закрытии проги
-        self.cachefile_tableBeforeWatering.write(self.tableBeforeWatering.table_items())
-        self.cachefile_tableAfterWatering.write(self.tableAfterWatering.table_items())
+        self.cachefile_tableBeforeWatering.write(self.tableBeforeWatering.items())
+        self.cachefile_tableAfterWatering.write(self.tableAfterWatering.items())
 
     @staticmethod
     def show_error(text='Error', informative_text='More information', title='Error'):
@@ -245,31 +256,27 @@ class Window(QMainWindow):
 
 class DialogAddGelling(QDialog):
     columns = {"Name": None,
-                        "К, Па*с": None,
-                        "n": None,
-                        "Rост_в": None,
-                        "Rост_г": None,
-                        "Кр.гр.дав_в, атм/м": None,
-                        "Кр.гр.дав_г, атм/м": None,
-                        "Q, м3/сут": None,
-                        "V, м3": None,
-                        "Пл-ть, г/см3": None,
-                        "Время геле-обр-я., мин": None}
+               "К, Па*с": None,
+               "n": None,
+               "Rост_в": None,
+               "Rост_г": None,
+               "Кр.гр.дав_в, атм/м": None,
+               "Кр.гр.дав_г, атм/м": None,
+               "Q, м3/сут": None,
+               "V, м3": None,
+               "Пл-ть, г/см3": None,
+               "Время геле-обр-я., мин": None}
 
     def __init__(self, cache_file):
         super(DialogAddGelling, self).__init__()
         self.ui = uic.loadUi("DialogAddGelling.ui", self)
         self.setWindowTitle("Добавление гелеобразующего состава")
         self.cache_file = cache_file
-        self.fill_table()
+        self.table = UpgradedTableWidget(self.ui.tableWidgetGelling)
+        self.init_table()
 
-    def fill_table(self):
-        self.ui.tableWidgetGelling.setColumnCount(len(self))
-        self.ui.tableWidgetGelling.setRowCount(1)
-        self.ui.tableWidgetGelling.setHorizontalHeaderLabels(self.columns.keys())
-
-    def __len__(self):
-        return len(self.columns)
+    def init_table(self):
+        self.table.fill_labels(('Состав', ), self.columns.keys())
 
     def add_data(self):
         if self.exec() == 0:  # Если нажали "ок" в окне
@@ -277,30 +284,26 @@ class DialogAddGelling(QDialog):
 
         gelling_container = self.cache_file.read()  # считываем данные с файла
         if gelling_container is None:
-            gelling_container = GellingContainer()
+            gelling_container = dict()
 
-        for index, key in enumerate(self.columns):
-            value = self.ui.tableWidgetGelling.item(0, index)
-            if value is None:
-                self.columns[key] = ""
-            else:
-                self.columns[key] = value.text()
+        column_dict = self.table.dict_row()
 
-        gelling_container.add(self.columns)
+        name_gelling = ''
+        new_gelling = dict()
+        for key in column_dict:
+
+            if key == 'Name':
+                name_gelling = column_dict[key]
+                if name_gelling == '':
+                    return None
+                else:
+                    gelling_container[name_gelling] = new_gelling
+                continue
+
+            new_gelling[key] = column_dict[key]
+
         self.cache_file.write(gelling_container)
-
-
-class GellingContainer:
-    def __init__(self):
-        self.data = dict()
-
-    def add(self, columns):
-        name = columns["Name"]
-        columns.pop("Name")
-        self.data[name] = columns
-
-    def __len__(self):
-        return len(self.data)
+        return name_gelling, self.columns
 
 
 class DialogResult(QMainWindow):
