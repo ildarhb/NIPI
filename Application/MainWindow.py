@@ -145,7 +145,7 @@ class Window(QMainWindow):
 
     # ПРОЧИЕ ФУНКЦИИ
 
-    def load_data(self): # Загружает данные в таблицу из входного Excel
+    def load_data(self):  # Загружает данные в таблицу из входного Excel
 
         if not debug:
             file_name = QFileDialog.getOpenFileName(self, 'Открыть файл')
@@ -194,7 +194,7 @@ class Window(QMainWindow):
         self.WindowData.gis_before_watering = self.tableBeforeWatering.dict_column()
 
         for index, item in enumerate(self.tableGelling.table_items()):
-            self.WindowData.gelling[index] = item
+            self.WindowData.gelling[index] = dict(zip(DialogAddGelling.columns, item))
 
     def update_gelling_items(self):  # обновляем данные в выпадающих списках
         self.combobox_gelling1.clear()
