@@ -105,7 +105,7 @@ class Window(QMainWindow):
             table.fill_data(cache)
 
     def init_table_gelling(self):
-        columns = DialogAddGelling.columns  # получаем колонки из объекта добавления составов
+        columns = DialogAddGelling.columns.copy()  # получаем колонки из объекта добавления составов
         columns.pop('Name')
         rows = ('1', '2', '3')
 
@@ -126,9 +126,10 @@ class Window(QMainWindow):
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
         dialog_gelling = DialogAddGelling(self.cachefile_gelling)  # создаем окно выбора полимеров
-        name, new_gelling = dialog_gelling.add_data()  # вызываем окно
-        if new_gelling is None:
+        res = dialog_gelling.add_data()  # вызываем окно
+        if res is None:
             return
+        (name, new_gelling) = res
         self.cache_gelling = self.cachefile_gelling.read()
         self.combobox_gelling1.addItem(name)
         self.combobox_gelling2.addItem(name)
@@ -212,11 +213,6 @@ class Window(QMainWindow):
 
         if self.cache_gelling is None:
             return
-
-        # if self.cache_gelling is not None:
-        #     self.cache_gelling = self.cache_gelling.data
-        # else:
-        #     return
 
         if len(self.cache_gelling) == 0:
             return
@@ -303,7 +299,7 @@ class DialogAddGelling(QDialog):
             new_gelling[key] = column_dict[key]
 
         self.cache_file.write(gelling_container)
-        return name_gelling, self.columns
+        return (name_gelling, self.columns)
 
 
 class DialogResult(QMainWindow):
