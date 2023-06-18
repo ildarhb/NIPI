@@ -19,6 +19,7 @@ class Window(QMainWindow):
         self.cache_gelling = None  # гелеобразующие составы
         # файлы кэша
         self.cachefile_gelling = CacheFile("Gelling")
+        self.cachefile_gelling_selected = CacheFile("Gelling_selected")
         self.cachefile_tableBeforeWatering = CacheFile("TableBeforeWatering")
         self.cachefile_tableAfterWatering = CacheFile("TableAfterWatering")
         # выпадающие списки
@@ -135,7 +136,6 @@ class Window(QMainWindow):
         self.combobox_gelling2.addItem(name)
         self.combobox_gelling3.addItem(name)
 
-
     def combobox_gelling_changed1(self):
         gelling_key = self.combobox_gelling1.currentText()
 
@@ -228,6 +228,16 @@ class Window(QMainWindow):
         self.fill_table_gelling(2, self.combobox_gelling2.currentText())
         self.fill_table_gelling(3, self.combobox_gelling3.currentText())
 
+        combo_gelling_mas = (self.combobox_gelling1, self.combobox_gelling2, self.combobox_gelling3)
+        for index, key in enumerate(self.cachefile_gelling_selected.read()):
+            if key == '':
+                continue
+            combo_index = combo_gelling_mas[index].findText(key)
+            if combo_index == -1:
+                continue
+            combo_gelling_mas[index].setCurrentIndex(combo_index)
+            self.fill_table_gelling(index + 1, key)
+
     def fill_table_gelling(self, num: int, key: str):
         if key == '':
             return
@@ -241,6 +251,12 @@ class Window(QMainWindow):
     def save_data(self):  # сохраняем данные при закрытии проги
         self.cachefile_tableBeforeWatering.write(self.tableBeforeWatering.items())
         self.cachefile_tableAfterWatering.write(self.tableAfterWatering.items())
+
+        gelling1 = self.combobox_gelling1.currentText()
+        gelling2 = self.combobox_gelling2.currentText()
+        gelling3 = self.combobox_gelling3.currentText()
+        selected = (gelling1, gelling2, gelling3)
+        self.cachefile_gelling_selected.write(selected)
 
     @staticmethod
     def show_error(text='Error', informative_text='More information', title='Error'):
