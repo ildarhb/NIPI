@@ -7,9 +7,9 @@ class UpgradedTableWidget:
         self.VerticalHeaderLabels = tuple()
         self.HorizontalHeaderLabels = tuple()
 
-    def fill_labels(self, rows, columns):
-        self.VerticalHeaderLabels = tuple(rows)
-        self.HorizontalHeaderLabels = tuple(columns)
+    def fill_labels(self, vertical, horizontal):
+        self.VerticalHeaderLabels = tuple(vertical)
+        self.HorizontalHeaderLabels = tuple(horizontal)
 
         self.table.setRowCount(len(self.VerticalHeaderLabels))
         self.table.setVerticalHeaderLabels(self.VerticalHeaderLabels)

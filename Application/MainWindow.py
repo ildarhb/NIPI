@@ -5,8 +5,6 @@ from WindowData import WindowData
 from CacheFile import CacheFile
 from UpgradetWidgets import UpgradedTableWidget
 
-debug = False
-
 
 class Window(QMainWindow):
     def __init__(self):
@@ -22,12 +20,13 @@ class Window(QMainWindow):
         self.cachefile_gelling_selected = CacheFile("Gelling_selected")
         self.cachefile_tableBeforeWatering = CacheFile("TableBeforeWatering")
         self.cachefile_tableAfterWatering = CacheFile("TableAfterWatering")
+        self.cachefile_tableWatering = CacheFile("TableWatering")
         # выпадающие списки
         self.combobox_gelling1 = self.ui.comboGelling1  # Выпадающий список с гелеобразующими составами
         self.combobox_gelling2 = self.ui.comboGelling2
         self.combobox_gelling3 = self.ui.comboGelling3
         # таблицы
-        self.tableWatering = self.ui.tableWatering  # ГИС
+        self.tableWatering = UpgradedTableWidget(self.ui.tableWatering)  # ГИС
         self.tableGelling = UpgradedTableWidget(self.ui.tableWidgetGelling)  # Гелеобразующие составы
         self.tableAfterWatering = UpgradedTableWidget(self.ui.tableAfterWatering)  # Данные после обводнения
         self.tableBeforeWatering = UpgradedTableWidget(self.ui.tableBeforeWatering)  # Данные до обводнения
@@ -44,7 +43,8 @@ class Window(QMainWindow):
         self.init_table_after_watering()
         self.init_table_before_watering()
         self.init_table_gelling()
-        self.update_gelling_items()
+        self.init_gelling_items()
+        self.init_table_watering()
 
     def closeEvent(self, *args, **kwargs):
         self.save_data()
@@ -112,10 +112,18 @@ class Window(QMainWindow):
 
         self.tableGelling.fill_labels(rows, columns)
 
+    def init_table_watering(self):
+        cache = self.cachefile_tableWatering.read()
+        if cache is None:
+            return
+
+        self.tableWatering.fill_labels(cache['vertical'], cache['horizontal'])
+        self.tableWatering.fill_data(cache['data'])
+
     # ОБРАБОТЧИКИ СОБЫТИЙ
 
     def btn_getdata_clicked(self):  # Нажатие на кнопку "получить данные"
-        self.tableWatering.clear()
+        self.tableWatering.table.clear()
         self.load_data()
 
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
@@ -155,48 +163,32 @@ class Window(QMainWindow):
 
     def load_data(self):  # Загружает данные в таблицу из входного Excel
 
-        if not debug:
-            file_name = QFileDialog.getOpenFileName(self, 'Открыть файл')
+        file_name = QFileDialog.getOpenFileName(self, 'Открыть файл')
 
         try:
-            if debug:
-                file_data = initdata.get_gis("../doc/origin_gis.xlsx")
-            else:
-                file_data = initdata.get_gis(file_name[0])
+            file_data = initdata.get_gis(file_name[0])
         except BaseException:
             Window.show_error(informative_text='Не удалось прочитать файл с данными')
             return
             # raise ImportError("Не удалось прочитать файл с данными")
 
-        if len(file_data) == 0:  # если нет столбцов, то ничего не заполняем
-            return
-
-        self.tableWatering.setColumnCount(len(file_data))  # устанавливаем количество столбцов
-        columns = file_data[0].__dict__  # получаем все переменные класса
-        self.tableWatering.setRowCount(len(columns))  # устанавливаем количество строк
-        self.tableWatering.setVerticalHeaderLabels(columns.values())  # даем названия строкам
-
-        file_data.pop(0)  # удаляем первый столбец с именами
-
-        # Заполняем данными таблицу
-        for column_index, column in enumerate(file_data):
-            for row_index, row in enumerate(columns):
-                self.tableWatering.setItem(row_index, column_index, QTableWidgetItem(str(column.__getattribute__(row))))
-        return file_data
+        self.init_gis_to_table(file_data, self.tableWatering)
 
     def fill_WindowData(self):  # Заполнение класса WindowData
-        self.WindowData.gis.clear()
+        # self.WindowData.gis.clear()
 
-        table = self.tableWatering
-        row_count = table.rowCount()
-        column_count = table.columnCount()
+        # table = self.tableWatering
+        # row_count = table.rowCount()
+        # column_count = table.columnCount()
 
         # Заполняем ГИС
-        for column_index in range(0, column_count):
-            current_row = (table.item(row_index, column_index) for row_index in range(row_count))  # столбец таблицы
-            current_row_text = (item.text() if item is not None else "" for item in current_row)  # текстовый столбец
-            init_gis_row = initdata.InitGis(*tuple(current_row_text))  # делаем из текста класс InitGis
-            self.WindowData.gis.append(init_gis_row)  # добавляем класс в список
+        # for column_index in range(0, column_count):
+        #     current_row = (table.item(row_index, column_index) for row_index in range(row_count))  # столбец таблицы
+        #     current_row_text = (item.text() if item is not None else "" for item in current_row)  # текстовый столбец
+        #     init_gis_row = initdata.InitGis(*tuple(current_row_text))  # делаем из текста класс InitGis
+        #     self.WindowData.gis.append(init_gis_row)  # добавляем класс в список
+
+        self.WindowData.gis = self.table_to_init_gis(self.tableWatering.items())
 
         self.WindowData.gis_after_watering = self.tableAfterWatering.dict_column()
         self.WindowData.gis_before_watering = self.tableBeforeWatering.dict_column()
@@ -206,7 +198,7 @@ class Window(QMainWindow):
         for index, item in enumerate(self.tableGelling.items()):
             self.WindowData.gelling[index] = dict(zip(gelling_columns, item))
 
-    def update_gelling_items(self):  # обновляем данные в выпадающих списках
+    def init_gelling_items(self):  # обновляем данные в выпадающих списках
         self.combobox_gelling1.clear()
         self.combobox_gelling2.clear()
         self.combobox_gelling3.clear()
@@ -258,6 +250,35 @@ class Window(QMainWindow):
         selected = (gelling1, gelling2, gelling3)
         self.cachefile_gelling_selected.write(selected)
 
+        dict_gis = {'vertical': self.tableWatering.VerticalHeaderLabels,
+                    'horizontal': self.tableWatering.HorizontalHeaderLabels,
+                    'data': self.tableWatering.items()}
+        self.cachefile_tableWatering.write(dict_gis)
+
+    @staticmethod
+    def init_gis_to_table(file_data: list, table: UpgradedTableWidget):  # костыльный метод для отделения мух от котлет
+        if len(file_data) < 2:  # Название и 1-й столбец
+            return
+
+        vertical_labels = tuple(file_data[0].__dict__.values())[1:]
+
+        file_data.pop(0)  # удаляем колонку с именами
+        horizontal_labels = tuple(interval.name for interval in file_data)
+
+        vertical_keys = tuple(file_data[0].__dict__.keys())[1:]
+        data = tuple(tuple(col.__dict__[key] for col in file_data) for key in vertical_keys)
+        table.fill_labels(vertical_labels, horizontal_labels, )
+        table.fill_data(data)
+
+    @staticmethod
+    def table_to_init_gis(data):
+        if len(data) == 0:
+            return None
+
+        intervals = len(data[0])
+        # использует тот факт, что Ильдару не нужны имена для расчетов и передаем пустую строку в имени
+        return [initdata.InitGis('', *tuple(data[index][interval] for index in range(len(data)))) for interval in range(intervals)]
+
     @staticmethod
     def show_error(text='Error', informative_text='More information', title='Error'):
         msg = QMessageBox()
@@ -293,7 +314,7 @@ class DialogAddGelling(QDialog):
         self.table.fill_labels(('Состав', ), self.columns.keys())
 
     def add_data(self):
-        if self.exec() == 0:  # Если нажали "ок" в окне
+        if self.exec() == 0:  # Если закрыли окно
             return
 
         gelling_container = self.cache_file.read()  # считываем данные с файла
@@ -328,8 +349,6 @@ class DialogResult(QMainWindow):
 
         self.radius = radius
         self.stability = stability
-        # self.radius_plot = radius_plot
-        # self.injection_plot = injection_plot
         self.window_data = window_data
 
         self.table_radius = UpgradedTableWidget(self.ui.table_radius)
@@ -343,12 +362,10 @@ class DialogResult(QMainWindow):
 
     def show_radius(self):
         calculation.get_radius_image(self.window_data)
-        # self.radius_plot.show()
 
     def show_injection(self):
         calculation.get_injection_image(self.window_data)
         calculation.get_radius_graph(self.window_data)
-        # self.injection_plot.show()
 
     def fill_radius_table(self):
         table = self.table_radius
