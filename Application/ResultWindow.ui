@@ -18,13 +18,20 @@
     <item>
      <widget class="QTabWidget" name="tabs_result">
       <property name="currentIndex">
-       <number>2</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="tab_image">
        <attribute name="title">
         <string>Графики</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <layout class="QVBoxLayout" name="verticalLayout_4">
+        <item>
+         <widget class="QPushButton" name="btn_show_injection">
+          <property name="text">
+           <string>показать график закачки</string>
+          </property>
+         </widget>
+        </item>
         <item>
          <widget class="QPushButton" name="btn_show_radius">
           <property name="text">
@@ -33,9 +40,9 @@
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="btn_show_injection">
+         <widget class="QPushButton" name="btn_show_radius_2">
           <property name="text">
-           <string>показать график закачки</string>
+           <string>показать график радиуса 2</string>
           </property>
          </widget>
         </item>

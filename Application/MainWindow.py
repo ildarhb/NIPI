@@ -175,19 +175,6 @@ class Window(QMainWindow):
         self.init_gis_to_table(file_data, self.tableWatering)
 
     def fill_WindowData(self):  # Заполнение класса WindowData
-        # self.WindowData.gis.clear()
-
-        # table = self.tableWatering
-        # row_count = table.rowCount()
-        # column_count = table.columnCount()
-
-        # Заполняем ГИС
-        # for column_index in range(0, column_count):
-        #     current_row = (table.item(row_index, column_index) for row_index in range(row_count))  # столбец таблицы
-        #     current_row_text = (item.text() if item is not None else "" for item in current_row)  # текстовый столбец
-        #     init_gis_row = initdata.InitGis(*tuple(current_row_text))  # делаем из текста класс InitGis
-        #     self.WindowData.gis.append(init_gis_row)  # добавляем класс в список
-
         self.WindowData.gis = self.table_to_init_gis(self.tableWatering.items())
 
         self.WindowData.gis_after_watering = self.tableAfterWatering.dict_column()
@@ -356,6 +343,7 @@ class DialogResult(QMainWindow):
 
         self.ui.btn_show_radius.clicked.connect(self.show_radius)
         self.ui.btn_show_injection.clicked.connect(self.show_injection)
+        self.ui.btn_show_radius_2.clicked.connect(self.show_radius2)
 
         self.fill_radius_table()
         self.fill_stability_table()
@@ -365,6 +353,8 @@ class DialogResult(QMainWindow):
 
     def show_injection(self):
         calculation.get_injection_image(self.window_data)
+
+    def show_radius2(self):
         calculation.get_radius_graph(self.window_data)
 
     def fill_radius_table(self):
@@ -391,8 +381,6 @@ class DialogResult(QMainWindow):
         if len(self.stability) == 0:
             return
 
-        # row_names = list(map(str, range(len(self.stability))))
-        # column_names = list(map(str, range(len(self.stability[1]))))
         column_names = self.stability[0]
         column_names.pop(0)
         row_names = list(map(lambda x: x[0], self.stability))
