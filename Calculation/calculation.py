@@ -5,6 +5,23 @@ import numpy as np
 import io
 import matplotlib.pyplot as plt
 
+def get_const(data):
+    global D,Rc,Qj,Qg_init,VGF,Ppl_ishod,Ppl,count,alpha,Pkp,spz,cPzg,Pzab,kt,dt_init,Pbuf,Nvd
+    D = float(data.gis_after_watering.get('D скв. дол., мм'))/2000
+    Ppl_ishod = float(data.gis_after_watering.get('Pпл, атм'))
+    Ppl = Ppl_ishod*101325
+    Rc = float(data.gis_after_watering.get('Rс, м'))
+    Pzab = float(data.gis_after_watering.get('Pзаб, атм'))
+    Qj = float(data.gis_after_watering.get('Qж, м3/сут'))
+    Qg_init = float(data.gis_after_watering.get('Qг, тыс. м3/сут'))
+    VGF = Qj/Qg_init
+    spz = float(data.gis_after_watering.get('Вяз-ть пл.воды, сПз'))/1000
+    cPzg = float(data.gis_after_watering.get('Плотность газа,  г/см3'))/1000
+    kt = float(data.gis_after_watering.get('К-т сверхсжимаемости газа'))
+    dt_init = float(data.gis_after_watering.get('ΔT м/у устьем и забоем, ℃'))
+    Pbuf = float(data.gis_after_watering.get('Pбуф, атм'))
+    Nvd = float(data.gis_after_watering.get('Hвд, м'))
+
 def calc_p(t, h_w, m_w, k_w, gell):
     r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
     w = r/t
@@ -47,7 +64,7 @@ def get_graph_data(h_w, m_w, k_w, gell, t1_w, t2_w, t3_w):
         if t > (t1_w+t2_w+t3_w):
             P_res = 0
             m_res = 0 
-        P_ust = (P_res - 1000*9.81*1757/101325 ) if P_res - 1000*9.81*1757/101325 > 0 else 0
+        P_ust = (P_res - 1000*9.81*Nvd/101325 ) if P_res - 1000*9.81*Nvd/101325 > 0 else 0
         Pust_data.append(P_ust)
         P_data.append(P_res)
         m_data.append(m_res)
@@ -55,6 +72,25 @@ def get_graph_data(h_w, m_w, k_w, gell, t1_w, t2_w, t3_w):
     return P_data, Pust_data, m_data, t_data
         
 
+
+def calctable(h_w, m_w, k_w, gell, Vol):
+    for i in range(10000):
+        t = (i+1)*30
+        r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
+        w = r/t
+        y = 4*alpha*w/(math.sqrt(8*float(k_w)*10**(-15)*float(m_w)/100))
+        m = float(gell.get("К, Па*с"))*y**(float(gell.get("n"))-1)
+        P = Ppl+m*y+m*float(gell.get("Q, м3/сут"))/86400*math.log(r/D)/(2*math.pi*float(k_w)*10**(-15)*float(h_w))
+        V = float(gell.get("Q, м3/сут"))/86400*t
+
+        if P <= Pkp:
+            t_res = t
+            P_res = P
+            r_res = r
+            v_res = V
+        else:
+            return t_res, P_res, r_res, v_res
+    return t_res, P_res, r_res, v_res
 
 def step1fin(h_w, m_w, k_w, gell, Vol):
     for i in range(10000):
@@ -68,9 +104,12 @@ def step1fin(h_w, m_w, k_w, gell, Vol):
 
         if P <= Pkp and V <= Vol:
             t_res = t
+            P_res = P
+            r_res = r
+            v_res = V
         else:
-            return t_res
-    return t_res
+            return t_res, P_res, r_res, v_res
+    return t_res, P_res, r_res, v_res
 
 def step2fin(t1,t2,t3, h_w, gell):
     if t1 != 0:
@@ -171,7 +210,7 @@ def get_k_h(gis, h_w , h_g, k_w, k_g):
     return Volumes, Vol_w, Vol_g
 
 def get_temp(data, a, b, c):
-    dP = 7.1*10**5
+    dP = Ppl - Pzab
     temp1 = 'x' if a*(D+data[0]) <= dP else 'да'
     temp2 = 'x' if b*(D+data[1]) <= dP else 'да'
     temp3 = 'x' if c*(D+data[2]) <= dP else 'да'
@@ -203,16 +242,13 @@ def ustoy(gis, radius_data):
         res.append([temp1, temp2, temp3, temp4])
     return res
 
-def calcQ(gis, radius, gelling, ustoy):
-    dP = 7.1*10**5
-    spz = 0.00082
-    Rc = 250
-    D = 0.108 
+def calcQw(gis, radius, gelling, ustoy):
+    dP = Ppl - Pzab 
     
     Res = 0
-    for i in range(len(gis)):
-        if gis[i].permeability != '':
-            temp = 2*math.pi*float(gis[i].permeability)*10**(-15)*float(gis[i].thickness)*dP/spz
+    for i in range(1, len(gis)):
+        if gis[i-1].permeability != '':
+            temp = 2*math.pi*float(gis[i-1].permeability)*10**(-15)*float(gis[i-1].thickness)*dP/spz
             ln1 = (math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D) + math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D))**(-1)
             ln2 = (math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D) + math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D))**(-1)
             ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
@@ -227,21 +263,51 @@ def calcQ(gis, radius, gelling, ustoy):
             ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + float(gelling[2].get("Rост_в"))*math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
             ln_min = min(ln1, ln2, ln3)
             Q = ln_min*temp*86400
-            # if ustoy[i][0] == 'да' or ustoy[i][1] == 'да' or ustoy[i][2] == 'да':
-            #     Q = 0
-            if gis[i].curr_saturation != "В":
+            if ustoy[i-1][0] == 'да' or ustoy[i-1][1] == 'да' or ustoy[i-1][2] == 'да':
                 Q = 0
-            # if gis[i].paker_isolation == "нет":
-            #     Q = Q1
+            if gis[i-1].curr_saturation != "В":
+                Q = 0
+            if gis[i-1].paker_isolation != "нет":
+                Q = Q1
             Res += Q
     return Res
-        
+
+
+def calcQg(gis, radius, gelling, ustoy):
+    dP = Ppl**2 - Pzab**2 
+    
+    Res = 0
+    for i in range(1, len(gis)):
+        if gis[i-1].permeability != '':
+            temp = math.pi*float(gis[i-1].permeability)*10**(-15)*float(gis[i-1].thickness)*dP/(cPzg*10**(5))
+            ln1 = (math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D) + math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D))**(-1)
+            ln2 = (math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D) + math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D))**(-1)
+            ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
+            ln_min = min(ln1, ln2, ln3)
+            Q1 = ln_min*temp*86400
+            if ustoy[i][0] == 'да' or ustoy[i][1] == 'да' or ustoy[i][2] == 'да':
+                Q1 = 0
+            if gis[i].curr_saturation != "В":
+                Q1 = 0
+            ln1 = (math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D) + float(gelling[0].get("Rост_г"))*math.log(Rc / (radius[i][0] + D)) +(Rc -(radius[i][0] + D))/(Rc - D))**(-1)
+            ln2 = (math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D) + float(gelling[1].get("Rост_г"))*math.log(Rc / (radius[i][1] + D)) +(Rc -(radius[i][1] + D))/(Rc - D))**(-1)
+            ln3 = (math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D) + float(gelling[2].get("Rост_г"))*math.log(Rc / (radius[i][2] + D)) +(Rc -(radius[i][2] + D))/(Rc - D))**(-1)
+            ln_min = min(ln1, ln2, ln3)
+            Q = ln_min*temp*86400/1000
+            if ustoy[i-1][0] == 'да' or ustoy[i-1][1] == 'да' or ustoy[i-1][2] == 'да':
+                Q = 0
+            if gis[i-1].curr_saturation != "Г":
+                Q = 0
+            if gis[i-1].paker_isolation != "нет":
+                Q = Q1
+            Res += Q
+    return Res
         
 
 
 
     
-def calculation_click(data):
+def calculation_click(data):    
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
     Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
     radius_data = []
@@ -254,21 +320,90 @@ def calculation_click(data):
     
 
 
-    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
     r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
 
-    t1_g = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
-    t2_g = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
-    t3_g = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
+    t1_g, P1_g, r1_res_g, v1_res_w = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
+    t2_g, P2_g, r1_res_g, v2_res_w = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
+    t3_g, P3_g, r1_res_g, v3_res_w = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
     r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
+
+    t1_w_c, P1_w_c, r1_res_w_c, v1_res_w_c = calctable(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w_c, P2_w_c, r2_res_w_c, v2_res_w_c = calctable(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w_c, P3_w_c, r3_res_w_c, v3_res_w_c = calctable(h_w, m_w, k_w, data.gelling[2], Vol_w)
     
     radius_data.insert(0, [r1_g, r2_g, r3_g])
     radius_data.insert(0, [r1_w, r2_w, r3_w])
     ustoy_data = ustoy(data.gis, radius_data)
+    Qw = calcQw(data.gis, radius_data[2:], data.gelling, ustoy_data[2:])
+    Qg = calcQg(data.gis, radius_data[2:], data.gelling, ustoy_data[2:])
+    a1 = Qw*Kw
+    a2 = a1-Qj
+    a3 = a2/Qj*100
+    b1 =(Qg*273.15*Ppl_ishod)/(kt * Pbuf * (273.15 + dt_init))*Kg
+    b2 = b1 - Qg_init
+    b3 = b2/Qg_init*100
+    c1 = a1/b1
+    c2 = c1 - VGF
+    c3 = c2/VGF*100
+    table6 = {
+        'Qж, м3/сут' : [a1,a2,a3],
+        'Qг, тыс. м3/сут':[b1,b2,b3],
+        'ВГФ, м3/м3':[c1,c2,c3]
+    }
+    table1 = {
+        '1-й полимер в вод. пл, м' : r1_w,
+        '2-й полимер в вод. пл, м' : r2_w,
+        '3-й полимер в вод. пл, м' : r3_w,
+        '1-й полимер в газ. пл, м' : r2_g,
+        '2-й полимер в газ. пл, м' : r2_g,
+        '3-й полимер в газ. пл, м' : r2_g,
+    }
+    table2 = {
+        '1-й полимер в вод. пл, м' : ustoy_data[0][0],
+        '2-й полимер в вод. пл, м' : ustoy_data[0][1],
+        '3-й полимер в вод. пл, м' : ustoy_data[0][2],
+        '1-й полимер в газ. пл, м' : ustoy_data[1][0],
+        '2-й полимер в газ. пл, м' : ustoy_data[1][1],
+        '3-й полимер в газ. пл, м' : ustoy_data[1][2],
+    }
+    table3 = { 
+        'Расч' : {
+        '1-й полимер' : [P1_w_c/101325, r1_res_w_c, v1_res_w_c, v1_res_w_c / float(data.gelling[0].get("Q, м3/сут"))*1440],
+        '2-й полимер' : [P2_w_c/101325, r2_res_w_c, v2_res_w_c, v2_res_w_c / float(data.gelling[1].get("Q, м3/сут"))*1440],
+        '3-й полимер' : [P3_w_c/101325, r3_res_w_c, v3_res_w_c, v3_res_w_c / float(data.gelling[2].get("Q, м3/сут"))*1440],
+        },
+        'Прин' : {
+        '1-й полимер' : [P1_w/101325, r1_res_w, Vol_w, Vol_w / float(data.gelling[0].get("Q, м3/сут"))*1440],
+        '2-й полимер' : [P2_w/101325, r2_res_w, Vol_w, Vol_w / float(data.gelling[1].get("Q, м3/сут"))*1440],
+        '3-й полимер' : [P3_w/101325, r3_res_w, Vol_w, Vol_w / float(data.gelling[2].get("Q, м3/сут"))*1440],
+        }
+    }
+    table4 = {
+        '1-го полимера, мин' : t1_w/60,
+        '2-го полимера, мин' : t2_w/60,
+        '3-го полимера, мин' : t3_w/60,
+        'Итого, мин' : (t1_w + t2_w + t3_w)/60
+    }
+    table5 = {
+        '1-го полимера, м3' : Vol_w,
+        '2-го полимера, м3' : Vol_w,
+        '3-го полимера, м3' : Vol_w,
+        'Итого, м3' : 3*Vol_w
+    }
+    table = {
+        'Радиусы эранов' : table1,
+        'Устойчивость экранов' : table2,
+        'Время закачки' : table3,
+        'Объем закачки в вод. пл.' : table4,
+        'Объем закачки в вод. пл.' : table5,
+        'Прогноз-е пар-ры работы скв' : table6
+    }
 
-    #res = calcQ(data.gis, radius_data[2:], data.gelling, ustoy_data[2:])
+
+
 
     ustoy_data.insert(0, ['Экран из 1 полимера, м', 'Экран из 2 полимера, м', 'Экран из 3 полимера, м', 'Экран'])
     ustoy_data[0].insert(0, 'Устойчивость экранов')
@@ -284,7 +419,7 @@ def calculation_click(data):
     for i in range(len(radius_data)-3):
         radius_data[i+3].insert(0, f'{i+1}-й инт.')
 
-    return [radius_data, ustoy_data, '', plt]
+    return [radius_data, ustoy_data, table]
 
 
 def get_radius_image(data):
@@ -298,14 +433,14 @@ def get_radius_image(data):
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
 
-    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
     r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
 
-    t1_g = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
-    t2_g = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
-    t3_g = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
+    t1_g, P1_g, r1_res_g, v1_res_w = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
+    t2_g, P2_g, r1_res_g, v2_res_w = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
+    t3_g, P3_g, r1_res_g, v3_res_w = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
     r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
 
     image1 = io.BytesIO()
@@ -365,9 +500,9 @@ def get_injection_image(data):
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
 
-    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
 
     P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
     plt.figure(figsize=(20, 12))
@@ -392,15 +527,14 @@ def get_radius_graph(data):
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
 
-    t1_w= step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w= step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
     r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
 
     r1_data = get_r_data(h_w, data.gelling[0], r1_w, 0)
     r2_data = get_r_data(h_w, data.gelling[1], r2_w, t1_w)
     r3_data = get_r_data(h_w, data.gelling[2], r3_w, t1_w+t2_w)
-    print(t1_w, t2_w, t3_w)
 
 
     P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
