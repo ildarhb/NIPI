@@ -35,6 +35,10 @@ class UpgradedTableWidget:
         for ind_item, item in enumerate(row):
             self.table.setItem(row_index, ind_item, QTableWidgetItem(str(item)))
 
+    def fill_column(self, column, col_index):
+        for ind_item, item in enumerate(column):
+            self.table.setItem(ind_item, col_index, QTableWidgetItem(str(item)))
+
     def items(self):
         row_count = self.table.rowCount()
         column_count = self.table.columnCount()
@@ -46,3 +50,10 @@ class UpgradedTableWidget:
             table_data.append(tuple(current_row_text))
 
         return table_data
+
+    def fill_data_dict(self, data_dict: dict, horizontal_label=''):
+        vertical_labels = tuple(data_dict.keys())
+        horizontal_labels = (horizontal_label, )
+        self.fill_labels(vertical_labels, horizontal_labels)
+        column = data_dict.values()
+        self.fill_column(column, 0)
