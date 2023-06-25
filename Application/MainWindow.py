@@ -1,5 +1,6 @@
 from PyQt5 import uic
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox, QMainWindow
+from PyQt5.QtGui import QColor
 from Calculation import initdata, calculation
 from WindowData import WindowData
 from CacheFile import CacheFile
@@ -10,7 +11,7 @@ class Window(QMainWindow):
     def __init__(self):
         # Инициализация
         super(Window, self).__init__()
-        self.ui = uic.loadUi("UIWindow.ui", self)
+        self.ui = uic.loadUi("UI/UIWindow.ui", self)
 
         # НАЗНАЧЕНИЕ ПЕРЕМЕННЫХ
         self.WindowData = WindowData()  # Класс со всеми входными данными
@@ -106,7 +107,7 @@ class Window(QMainWindow):
             table.fill_data(cache)
 
     def init_table_gelling(self):
-        columns = DialogAddGelling.columns.copy()  # получаем колонки из объекта добавления составов
+        columns = DialogAddGellingWindow.columns.copy()  # получаем колонки из объекта добавления составов
         columns.pop('Name')
         rows = ('1', '2', '3')
 
@@ -131,11 +132,11 @@ class Window(QMainWindow):
         calculation.get_const(self.WindowData)
         res_list = calculation.calculation_click(self.WindowData)
         radius, stability, additional_table = tuple(res_list)
-        result_window = DialogResult(radius, stability, additional_table, self.WindowData)
+        result_window = DialogResultWindow(radius, stability, additional_table, self.WindowData)
         result_window.show()
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
-        dialog_gelling = DialogAddGelling(self.cachefile_gelling)  # создаем окно выбора полимеров
+        dialog_gelling = DialogAddGellingWindow(self.cachefile_gelling)  # создаем окно выбора полимеров
         res = dialog_gelling.add_data()  # вызываем окно
         if res is None:
             return
@@ -181,7 +182,7 @@ class Window(QMainWindow):
         self.WindowData.gis_after_watering = self.tableAfterWatering.dict_column()
         self.WindowData.gis_before_watering = self.tableBeforeWatering.dict_column()
 
-        gelling_columns = DialogAddGelling.columns.copy()
+        gelling_columns = DialogAddGellingWindow.columns.copy()
         gelling_columns.pop('Name')
         for index, item in enumerate(self.tableGelling.items()):
             self.WindowData.gelling[index] = dict(zip(gelling_columns, item))
@@ -279,7 +280,7 @@ class Window(QMainWindow):
         msg.exec_()
 
 
-class DialogAddGelling(QDialog):
+class DialogAddGellingWindow(QDialog):
     columns = {"Name": None,
                "К, Па*с": None,
                "n": None,
@@ -293,8 +294,9 @@ class DialogAddGelling(QDialog):
                "Время геле-обр-я., мин": None}
 
     def __init__(self, cache_file):
-        super(DialogAddGelling, self).__init__()
-        self.ui = uic.loadUi("DialogAddGelling.ui", self)
+        super(DialogAddGellingWindow, self).__init__()
+        self.ui = uic.loadUi("UI/DialogAddGelling.ui", self)
+
         self.setWindowTitle("Добавление гелеобразующего состава")
         self.cache_file = cache_file
         self.table = UpgradedTableWidget(self.ui.tableWidgetGelling)
@@ -331,10 +333,11 @@ class DialogAddGelling(QDialog):
         return (name_gelling, self.columns)
 
 
-class DialogResult(QMainWindow):
+class DialogResultWindow(QMainWindow):
     def __init__(self, radius, stability, additional_table, window_data: WindowData):
-        super(DialogResult, self).__init__()
-        self.ui = uic.loadUi('ResultWindow.ui', self)
+        super(DialogResultWindow, self).__init__()
+        self.ui = uic.loadUi('UI/ResultWindow.ui', self)
+
         self.setWindowTitle("Вывод результатов вычислений")
 
         self.radius = radius
@@ -405,6 +408,10 @@ class DialogResult(QMainWindow):
 
         table.fill_labels(row_names, column_names)
         table.fill_data(self.stability)
+
+        table.colorize_items('x', QColor(255, 46, 22))
+        table.colorize_items('да', QColor(58, 236, 49))
+        table.colorize_items('-', QColor(192, 192, 192))
 
     def fill_tab_result_injection(self):
         self.table_screen_radius.fill_data_dict(self.additional_table['Радиусы эранов'], 'Радиусы эранов')
