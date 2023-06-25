@@ -342,8 +342,16 @@ class DialogResult(QMainWindow):
         self.window_data = window_data
         self.additional_table = additional_table
 
+        # ТАБЛИЦЫ
         self.table_radius = UpgradedTableWidget(self.ui.table_radius)
         self.table_stability = UpgradedTableWidget(self.ui.table_stability)
+        # Таблицы результата закачивания составов
+        self.table_screen_radius = UpgradedTableWidget(self.ui.table_screen_radius)
+        self.table_screen_stability = UpgradedTableWidget(self.ui.table_screen_stability)
+        self.table_volume_injection = UpgradedTableWidget(self.ui.table_volume_injection)
+        self.table_prediction = UpgradedTableWidget(self.ui.table_prediction)
+        self.table_time_calc = UpgradedTableWidget(self.ui.table_time_calc)
+        self.table_time_prin = UpgradedTableWidget(self.ui.table_time_prin)
 
         self.ui.btn_show_radius.clicked.connect(self.show_radius)
         self.ui.btn_show_injection.clicked.connect(self.show_injection)
@@ -351,6 +359,7 @@ class DialogResult(QMainWindow):
 
         self.fill_radius_table()
         self.fill_stability_table()
+        self.fill_tab_result_injection()
 
     def show_radius(self):
         calculation.get_radius_image(self.window_data)
@@ -396,3 +405,25 @@ class DialogResult(QMainWindow):
 
         table.fill_labels(row_names, column_names)
         table.fill_data(self.stability)
+
+    def fill_tab_result_injection(self):
+        self.table_screen_radius.fill_data_dict(self.additional_table['Радиусы эранов'], 'Радиусы эранов')
+        self.table_screen_stability.fill_data_dict(self.additional_table['Устойчивость экранов'], 'Устойчивость экранов')
+        self.table_volume_injection.fill_data_dict(self.additional_table['Объем закачки в вод. пл.'], 'Объем закачки в вод. пл.')
+
+        vertical = tuple(self.additional_table['Прогноз-е пар-ры работы скв'].keys())
+        horizontal = ('Параметр', 'Δабс', 'Δотн, %')
+        data = tuple(self.additional_table['Прогноз-е пар-ры работы скв'].values())
+        self.table_prediction.fill_labels(vertical, horizontal)
+        self.table_prediction.fill_data(data)
+
+        vertical = tuple(self.additional_table['Время закачки']['Расч'].keys())
+        horizontal = ('P, атм', 'R, м', 'V, м3', 'T, мин')
+        data = tuple(self.additional_table['Время закачки']['Расч'].values())
+        self.table_time_calc.fill_labels(vertical, horizontal)
+        self.table_time_calc.fill_data(data)
+
+        vertical = tuple(self.additional_table['Время закачки']['Прин'].keys())
+        data = tuple(self.additional_table['Время закачки']['Прин'].values())
+        self.table_time_prin.fill_labels(vertical, horizontal)
+        self.table_time_prin.fill_data(data)
