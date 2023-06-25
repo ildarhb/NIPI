@@ -1,5 +1,5 @@
-from PyQt5 import QtWidgets, uic, QtGui
-from PyQt5.QtWidgets import QTableWidgetItem, QDialog, QFileDialog, QMessageBox, QMainWindow
+from PyQt5 import uic
+from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox, QMainWindow
 from Calculation import initdata, calculation
 from WindowData import WindowData
 from CacheFile import CacheFile
@@ -241,6 +241,8 @@ class Window(QMainWindow):
                     'horizontal': self.tableWatering.HorizontalHeaderLabels,
                     'data': self.tableWatering.items()}
         self.cachefile_tableWatering.write(dict_gis)
+
+    # СТАТИЧЕСКИЕ ФУНКЦИИ (костыли)
 
     @staticmethod
     def init_gis_to_table(file_data: list, table: UpgradedTableWidget):  # костыльный метод для отделения мух от котлет
