@@ -165,7 +165,7 @@ def get_gis(path="doc/origin_gis.xlsx"):
     for row in range(2,sheet.max_row):
         data.append(InitGis(
             #интервал
-            name =  f'{row}-й инт.',
+            name =  f'{row-1}-й инт.',
             #пласт
             plast = sheet[row][2].value,
             #пропласток
