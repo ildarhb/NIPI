@@ -6,7 +6,7 @@ import io
 import matplotlib.pyplot as plt
 
 def get_const(data):
-    global D,Rc,Qj,Qg_init,VGF,Ppl_ishod,Ppl,count,alpha,Pkp,spz,cPzg,Pzab,kt,dt_init,Pbuf,Nvd
+    global D,Rc,Qj,Qg_init,VGF,Ppl_ishod,Ppl,count,alpha,Pkp,spz,cPzg,Pzab,kt,dt_init,Pbuf,Nvd, Pzab_after
     D = float(data.gis_after_watering.get('D скв. дол., мм'))/2000
     Ppl_ishod = float(data.gis_after_watering.get('Pпл, атм'))
     Ppl = Ppl_ishod*101325
@@ -21,6 +21,7 @@ def get_const(data):
     dt_init = float(data.gis_after_watering.get('ΔT м/у устьем и забоем, ℃'))
     Pbuf = float(data.gis_after_watering.get('Pбуф, атм'))
     Nvd = float(data.gis_after_watering.get('Hвд, м'))
+    Pzab_after = float(data.gis_after_watering.get('Pзаб план-е после РИР, атм'))*101325
 
 def calc_p(t, h_w, m_w, k_w, gell):
     r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
@@ -210,7 +211,7 @@ def get_k_h(gis, h_w , h_g, k_w, k_g):
     return Volumes, Vol_w, Vol_g
 
 def get_temp(data, a, b, c):
-    dP = Ppl - Pzab
+    dP = Ppl - Pzab_after
     temp1 = 'x' if a*(D+data[0]) <= dP else 'да'
     temp2 = 'x' if b*(D+data[1]) <= dP else 'да'
     temp3 = 'x' if c*(D+data[2]) <= dP else 'да'
