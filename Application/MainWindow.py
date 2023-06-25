@@ -130,8 +130,8 @@ class Window(QMainWindow):
         self.fill_WindowData()
         calculation.get_const(self.WindowData)
         res_list = calculation.calculation_click(self.WindowData)
-        radius, stability, _, _ = tuple(res_list)
-        result_window = DialogResult(radius, stability, self.WindowData)
+        radius, stability, additional_table = tuple(res_list)
+        result_window = DialogResult(radius, stability, additional_table, self.WindowData)
         result_window.show()
 
     def btn_addgelling_clicked(self):  # Нажатие на кнопку "Добавить гелеобразующий состав"
@@ -181,7 +181,7 @@ class Window(QMainWindow):
         self.WindowData.gis_after_watering = self.tableAfterWatering.dict_column()
         self.WindowData.gis_before_watering = self.tableBeforeWatering.dict_column()
 
-        gelling_columns = DialogAddGelling.columns
+        gelling_columns = DialogAddGelling.columns.copy()
         gelling_columns.pop('Name')
         for index, item in enumerate(self.tableGelling.items()):
             self.WindowData.gelling[index] = dict(zip(gelling_columns, item))
@@ -332,7 +332,7 @@ class DialogAddGelling(QDialog):
 
 
 class DialogResult(QMainWindow):
-    def __init__(self, radius, stability, window_data: WindowData):
+    def __init__(self, radius, stability, additional_table, window_data: WindowData):
         super(DialogResult, self).__init__()
         self.ui = uic.loadUi('ResultWindow.ui', self)
         self.setWindowTitle("Вывод результатов вычислений")
@@ -340,6 +340,7 @@ class DialogResult(QMainWindow):
         self.radius = radius
         self.stability = stability
         self.window_data = window_data
+        self.additional_table = additional_table
 
         self.table_radius = UpgradedTableWidget(self.ui.table_radius)
         self.table_stability = UpgradedTableWidget(self.ui.table_stability)
