@@ -1,4 +1,5 @@
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem
+from PyQt5.QtGui import QColor
 
 
 class UpgradedTableWidget:
@@ -57,3 +58,16 @@ class UpgradedTableWidget:
         self.fill_labels(vertical_labels, horizontal_labels)
         column = data_dict.values()
         self.fill_column(column, 0)
+
+    def colorize_items(self, text: str, color: QColor):
+        row_count = self.table.rowCount()
+        column_count = self.table.columnCount()
+
+        for row in range(row_count):
+            for column in range(column_count):
+                item = self.table.item(row, column)
+                if item.text() == text:
+                    item.setBackground(color)
+                    self.table.setItem(row, column, item)
+
+
