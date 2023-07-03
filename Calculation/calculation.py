@@ -142,7 +142,8 @@ def step1(item, gell, Vol):
     r = 0
     V = 0
     r_data = []
-    if item.collector == "Да" and item.plast != "н/д":
+    print(item.permeability, item.porosity)
+    if item.collector == "Да" and item.plast != "n/a" and float(item.permeability) != 0 and  float(item.porosity)!=0:
         for i in range(10000):
             t = (i+1)*30
             r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(item.thickness)*86400))+D
