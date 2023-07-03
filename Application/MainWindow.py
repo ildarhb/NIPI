@@ -33,6 +33,8 @@ class Window(QMainWindow):
         self.tableBeforeWatering = UpgradedTableWidget(self.ui.tableBeforeWatering)  # Данные до обводнения
 
         # Связывание кнопок (событий) с функциями (слотами)
+        self.ui.btn_add_column_watering.clicked.connect(self.btn_add_column_watering_clicked)  # Добавить столбец
+        self.ui.btn_clear_watering.clicked.connect(self.btn_clear_watering_clicked)  # Очистить таблицу
         self.ui.btnGetData.clicked.connect(self.btn_getdata_clicked)  # Получить данные
         self.ui.bntCalculate.clicked.connect(self.btn_calculate_clicked)  # Рассчитать
         self.ui.btnAddGelling.clicked.connect(self.btn_addgelling_clicked)  # Добавить гелеобразующий состав
@@ -126,6 +128,12 @@ class Window(QMainWindow):
     def btn_getdata_clicked(self):  # Нажатие на кнопку "получить данные"
         self.tableWatering.table.clear()
         self.load_data()
+
+    def btn_add_column_watering_clicked(self):   # Нажатие на кнопку "добавить столбец"
+        self.tableWatering.add_column()
+
+    def btn_clear_watering_clicked(self):  # Нажатие на кнопку "Очистить таблицу"
+        self.tableWatering.clear(keepVerticalLabels=True)
 
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         self.fill_WindowData()

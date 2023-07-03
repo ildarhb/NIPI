@@ -9,14 +9,18 @@ class UpgradedTableWidget:
         self.HorizontalHeaderLabels = tuple()
 
     def fill_labels(self, vertical, horizontal):
-        self.VerticalHeaderLabels = tuple(vertical)
-        self.HorizontalHeaderLabels = tuple(horizontal)
+        self.fill_VerticalLabels(vertical)
+        self.fill_HorizontalLabels(horizontal)
 
-        self.table.setRowCount(len(self.VerticalHeaderLabels))
-        self.table.setVerticalHeaderLabels(self.VerticalHeaderLabels)
-
+    def fill_HorizontalLabels(self, labels):
+        self.HorizontalHeaderLabels = tuple(labels)
         self.table.setColumnCount(len(self.HorizontalHeaderLabels))
         self.table.setHorizontalHeaderLabels(self.HorizontalHeaderLabels)
+
+    def fill_VerticalLabels(self, labels):
+        self.VerticalHeaderLabels = tuple(labels)
+        self.table.setRowCount(len(self.VerticalHeaderLabels))
+        self.table.setVerticalHeaderLabels(self.VerticalHeaderLabels)
 
     def dict_column(self, index=0):
         names = self.VerticalHeaderLabels
@@ -69,5 +73,29 @@ class UpgradedTableWidget:
                 if item.text() == text:
                     item.setBackground(color)
                     self.table.setItem(row, column, item)
+
+    def clear(self, keepHorzontalLabels=False, keepVerticalLabels=False):
+        self.table.clear()
+
+        if keepHorzontalLabels:
+            self.fill_HorizontalLabels(self.HorizontalHeaderLabels)
+            self.table.setColumnCount(len(self.HorizontalHeaderLabels))
+        else:
+            self.HorizontalHeaderLabels = tuple()
+            self.table.setColumnCount(0)
+
+        if keepVerticalLabels:
+            self.fill_VerticalLabels(self.VerticalHeaderLabels)
+            self.table.setRowCount(len(self.VerticalHeaderLabels))
+        else:
+            self.VerticalHeaderLabels = tuple()
+            self.table.setRowCount(0)
+
+    def add_column(self, amount=1):
+        self.table.setColumnCount(self.table.columnCount() + amount)
+
+        
+
+
 
 

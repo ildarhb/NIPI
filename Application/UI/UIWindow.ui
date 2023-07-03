@@ -24,7 +24,7 @@
     <item>
      <widget class="QTabWidget" name="tabsData">
       <property name="currentIndex">
-       <number>1</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="tabAfterWatering">
        <attribute name="title">
@@ -55,11 +55,32 @@
          <widget class="QTableWidget" name="tableWatering"/>
         </item>
         <item>
-         <widget class="QPushButton" name="btnGetData">
-          <property name="text">
-           <string>Получить данные</string>
-          </property>
-         </widget>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QPushButton" name="btn_add_column_watering">
+            <property name="text">
+             <string>Добавить столбец</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btnGetData">
+            <property name="text">
+             <string>Получить данные из файла</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_clear_watering">
+            <property name="text">
+             <string>Очистить таблицу</string>
+            </property>
+            <property name="checkable">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </item>
        </layout>
       </widget>
