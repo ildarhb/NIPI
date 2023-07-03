@@ -129,8 +129,12 @@ class Window(QMainWindow):
 
     def btn_calculate_clicked(self):  # Нажатие на кнопку "рассчитать"
         self.fill_WindowData()
-        calculation.get_const(self.WindowData)
-        res_list = calculation.calculation_click(self.WindowData)
+        try:
+            calculation.get_const(self.WindowData)
+            res_list = calculation.calculation_click(self.WindowData)
+        except Exception as err:
+            self.show_error('Ошибка вычислений', str(err))
+            return
         radius, stability, additional_table = tuple(res_list)
         result_window = DialogResultWindow(radius, stability, additional_table, self.WindowData)
         result_window.show()
