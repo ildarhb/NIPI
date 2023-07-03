@@ -1,4 +1,7 @@
 import openpyxl
+import pandas as pd
+import io
+convert_excel = io.BytesIO()
 
 class InitGis():
     def __init__(self, name, plast, proplast, depth, 
@@ -129,7 +132,9 @@ def normlize(data):
 
 
 def get_gis(path="doc/origin_gis.xlsx"):
-    book = openpyxl.open(path, read_only=True, data_only=True)
+    df = pd.read_excel(path, header=None)
+    df.to_excel(convert_excel, index=False, header=False)
+    book = openpyxl.open(convert_excel, read_only=True, data_only=True)
     sheet = book.active
 
     data = []
