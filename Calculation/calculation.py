@@ -94,6 +94,10 @@ def calctable(h_w, m_w, k_w, gell, Vol):
     return t_res, P_res, r_res, v_res
 
 def step1fin(h_w, m_w, k_w, gell, Vol):
+    t_res = 0
+    P_res = 0
+    r_res = 0
+    v_res = 0
     for i in range(10000):
         t = (i+1)*30
         r = math.sqrt(t*float(gell.get("Q, м3/сут"))/(2*math.pi*float(h_w)*86400))+D
@@ -142,7 +146,6 @@ def step1(item, gell, Vol):
     r = 0
     V = 0
     r_data = []
-    print(item.permeability, item.porosity)
     if item.collector == "Да" and item.plast != "n/a" and float(item.permeability) != 0 and  float(item.porosity)!=0:
         for i in range(10000):
             t = (i+1)*30
@@ -189,7 +192,7 @@ def get_gis_calc(gis):
             k_g += float(gis[i].thickness)*float(gis[i].permeability)
     return h_w , h_g, m_w/h_w, m_g/h_g, k_w/h_w, k_g/h_g
 
-def get_k_h(gis, h_w , h_g, k_w, k_g):
+def get_k_h(gis,gell, h_w , h_g, k_w, k_g):
     res1 = 0
     res2 = 0
     Volumes = []
@@ -202,11 +205,11 @@ def get_k_h(gis, h_w , h_g, k_w, k_g):
     for i in range(len(gis)):
         if gis[i].thickness not in ['','None'] and gis[i].permeability not in ['','None']:
             res2 = float(gis[i].thickness)*float(gis[i].permeability)/(h_w*k_w+h_g*k_g)*(1/res1)
-            Volumes.append(res2*100)
+            Volumes.append(res2*float(gell.get("V, м3")))
             if gis[i].curr_saturation == 'В':
-                Vol_w += res2*100
+                Vol_w += res2*float(gell.get("V, м3"))
             else:
-                Vol_g += res2*100
+                Vol_g += res2*float(gell.get("V, м3"))
         else:
             Volumes.append(0)
     return Volumes, Vol_w, Vol_g
@@ -311,30 +314,32 @@ def calcQg(gis, radius, gelling, ustoy):
     
 def calculation_click(data):    
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
-    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    Volumes_1, Vol_w_1, Vol_g_1 = get_k_h(data.gis,data.gelling[0], h_w , h_g, k_w, k_g)
+    Volumes_2, Vol_w_2, Vol_g_2 = get_k_h(data.gis,data.gelling[1], h_w , h_g, k_w, k_g)
+    Volumes_3, Vol_w_3, Vol_g_3 = get_k_h(data.gis,data.gelling[2], h_w , h_g, k_w, k_g)
     radius_data = []
     for i in range(len(data.gis)):
-        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
-        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
-        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        t1 = step1(data.gis[i], data.gelling[0], Volumes_1[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes_2[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes_3[i])
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
     
 
 
-    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w_1)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w_2)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w_3)
     r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
 
-    t1_g, P1_g, r1_res_g, v1_res_w = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
-    t2_g, P2_g, r1_res_g, v2_res_w = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
-    t3_g, P3_g, r1_res_g, v3_res_w = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
+    t1_g, P1_g, r1_res_g, v1_res_w = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g_1)
+    t2_g, P2_g, r1_res_g, v2_res_w = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g_2)
+    t3_g, P3_g, r1_res_g, v3_res_w = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g_3)
     r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
 
-    t1_w_c, P1_w_c, r1_res_w_c, v1_res_w_c = calctable(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w_c, P2_w_c, r2_res_w_c, v2_res_w_c = calctable(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w_c, P3_w_c, r3_res_w_c, v3_res_w_c = calctable(h_w, m_w, k_w, data.gelling[2], Vol_w)
+    t1_w_c, P1_w_c, r1_res_w_c, v1_res_w_c = calctable(h_w, m_w, k_w, data.gelling[0], Vol_w_1)
+    t2_w_c, P2_w_c, r2_res_w_c, v2_res_w_c = calctable(h_w, m_w, k_w, data.gelling[1], Vol_w_2)
+    t3_w_c, P3_w_c, r3_res_w_c, v3_res_w_c = calctable(h_w, m_w, k_w, data.gelling[2], Vol_w_3)
     
     radius_data.insert(0, [r1_g, r2_g, r3_g])
     radius_data.insert(0, [r1_w, r2_w, r3_w])
@@ -378,9 +383,9 @@ def calculation_click(data):
         '3-й полимер' : [P3_w_c/101325, r3_res_w_c, v3_res_w_c, v3_res_w_c / float(data.gelling[2].get("Q, м3/сут"))*1440],
         },
         'Прин' : {
-        '1-й полимер' : [P1_w/101325, r1_res_w, Vol_w, Vol_w / float(data.gelling[0].get("Q, м3/сут"))*1440],
-        '2-й полимер' : [P2_w/101325, r2_res_w, Vol_w, Vol_w / float(data.gelling[1].get("Q, м3/сут"))*1440],
-        '3-й полимер' : [P3_w/101325, r3_res_w, Vol_w, Vol_w / float(data.gelling[2].get("Q, м3/сут"))*1440],
+        '1-й полимер' : [P1_w/101325, r1_res_w, Vol_w_1, Vol_w_1 / float(data.gelling[0].get("Q, м3/сут"))*1440],
+        '2-й полимер' : [P2_w/101325, r2_res_w, Vol_w_2, Vol_w_2 / float(data.gelling[1].get("Q, м3/сут"))*1440],
+        '3-й полимер' : [P3_w/101325, r3_res_w, Vol_w_3, Vol_w_3 / float(data.gelling[2].get("Q, м3/сут"))*1440],
         }
     }
     table4 = {
@@ -390,10 +395,10 @@ def calculation_click(data):
         'Итого, мин' : (t1_w + t2_w + t3_w)/60
     }
     table5 = {
-        '1-го полимера, м3' : Vol_w,
-        '2-го полимера, м3' : Vol_w,
-        '3-го полимера, м3' : Vol_w,
-        'Итого, м3' : 3*Vol_w
+        '1-го полимера, м3' : Vol_w_1,
+        '2-го полимера, м3' : Vol_w_2,
+        '3-го полимера, м3' : Vol_w_3,
+        'Итого, м3' :  Vol_w_1 + Vol_w_2 + Vol_w_3
     }
     table = {
         'Радиусы эранов' : table1,
@@ -426,24 +431,29 @@ def calculation_click(data):
 
 def get_radius_image(data):
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
-    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    Volumes_1, Vol_w_1, Vol_g_1 = get_k_h(data.gis,data.gelling[0], h_w , h_g, k_w, k_g)
+    Volumes_2, Vol_w_2, Vol_g_2 = get_k_h(data.gis,data.gelling[1], h_w , h_g, k_w, k_g)
+    Volumes_3, Vol_w_3, Vol_g_3 = get_k_h(data.gis,data.gelling[2], h_w , h_g, k_w, k_g)
     radius_data = []
     for i in range(len(data.gis)):
-        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
-        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
-        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        t1 = step1(data.gis[i], data.gelling[0], Volumes_1[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes_2[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes_3[i])
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
+    
 
-    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w_1)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w_2)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w_3)
     r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
 
-    t1_g, P1_g, r1_res_g, v1_res_w = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g)
-    t2_g, P2_g, r1_res_g, v2_res_w = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g)
-    t3_g, P3_g, r1_res_g, v3_res_w = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g)
+    t1_g, P1_g, r1_res_g, v1_res_w = step1fin(h_g, m_g, k_g, data.gelling[0], Vol_g_1)
+    t2_g, P2_g, r1_res_g, v2_res_w = step1fin(h_g, m_g, k_g, data.gelling[1], Vol_g_2)
+    t3_g, P3_g, r1_res_g, v3_res_w = step1fin(h_g, m_g, k_g, data.gelling[2], Vol_g_3)
     r1_g, r2_g, r3_g = step2fin(t1_g, t2_g, t3_g, h_g, data.gelling)
+
 
     image1 = io.BytesIO()
     df = pd.DataFrame(radius_data)
@@ -493,18 +503,22 @@ def get_radius_image(data):
 
 def get_injection_image(data):
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
-    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    Volumes_1, Vol_w_1, Vol_g_1 = get_k_h(data.gis,data.gelling[0], h_w , h_g, k_w, k_g)
+    Volumes_2, Vol_w_2, Vol_g_2 = get_k_h(data.gis,data.gelling[1], h_w , h_g, k_w, k_g)
+    Volumes_3, Vol_w_3, Vol_g_3 = get_k_h(data.gis,data.gelling[2], h_w , h_g, k_w, k_g)
     radius_data = []
     for i in range(len(data.gis)):
-        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
-        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
-        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        t1 = step1(data.gis[i], data.gelling[0], Volumes_1[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes_2[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes_3[i])
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
+    
 
-    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w_1)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w_2)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w_3)
 
     P_data, Pust_data, m_data, t_data = get_graph_data(h_w, m_w, k_w, data.gelling, t1_w, t2_w, t3_w)
     plt.figure(figsize=(20, 12))
@@ -520,18 +534,22 @@ def get_injection_image(data):
 
 def get_radius_graph(data):
     h_w , h_g, m_w, m_g, k_w, k_g = get_gis_calc(data.gis)
-    Volumes, Vol_w, Vol_g = get_k_h(data.gis, h_w , h_g, k_w, k_g)
+    Volumes_1, Vol_w_1, Vol_g_1 = get_k_h(data.gis,data.gelling[0], h_w , h_g, k_w, k_g)
+    Volumes_2, Vol_w_2, Vol_g_2 = get_k_h(data.gis,data.gelling[1], h_w , h_g, k_w, k_g)
+    Volumes_3, Vol_w_3, Vol_g_3 = get_k_h(data.gis,data.gelling[2], h_w , h_g, k_w, k_g)
     radius_data = []
     for i in range(len(data.gis)):
-        t1 = step1(data.gis[i], data.gelling[0], Volumes[i])
-        t2 = step1(data.gis[i], data.gelling[1], Volumes[i])
-        t3 = step1(data.gis[i], data.gelling[2], Volumes[i])
+        t1 = step1(data.gis[i], data.gelling[0], Volumes_1[i])
+        t2 = step1(data.gis[i], data.gelling[1], Volumes_2[i])
+        t3 = step1(data.gis[i], data.gelling[2], Volumes_3[i])
         r1, r2, r3 = step2(t1, t2, t3, data.gis[i], data.gelling)
         radius_data.append([r1, r2, r3])
+    
 
-    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w)
-    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w)
-    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w)
+
+    t1_w, P1_w, r1_res_w, v1_res_w = step1fin(h_w, m_w, k_w, data.gelling[0], Vol_w_1)
+    t2_w, P2_w, r2_res_w, v2_res_w = step1fin(h_w, m_w, k_w, data.gelling[1], Vol_w_2)
+    t3_w, P3_w, r3_res_w, v3_res_w = step1fin(h_w, m_w, k_w, data.gelling[2], Vol_w_3)
     r1_w, r2_w, r3_w = step2fin(t1_w, t2_w, t3_w, h_w, data.gelling)
 
     r1_data = get_r_data(h_w, data.gelling[0], r1_w, 0)
